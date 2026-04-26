@@ -28,6 +28,8 @@ __pycache__/
 backend/app/data/outputs/
 backend/app/data/overlays/
 backend/app/data/videos/
+colab/outputs/
+colab/.ipynb_checkpoints/
 
 # Downloaded pretrained model weights
 *.pt

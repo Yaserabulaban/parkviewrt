@@ -17,6 +17,7 @@ Data Storage: JSON slot polygon files
 ```text
 backend/app/
   main.py
+  settings.py
   api/routes/status.py
   services/yolo_detector.py
   services/occupancy.py
@@ -39,13 +40,14 @@ frontend/
 
 1. The frontend requests `/api/status/{location_id}`.
 2. FastAPI receives the request in `backend/app/api/routes/status.py`.
-3. `ParkingOccupancyService` loads the correct slot JSON file.
-4. The service loads the correct static parking image.
-5. `YoloDetector` runs pretrained YOLO and filters detections to class `car`.
-6. Each detected car bounding box is compared with each slot polygon.
-7. A slot is marked occupied when one of the occupancy rules passes.
-8. The backend returns total, occupied, available, and per-slot status.
-9. The frontend updates the dashboard layout.
+3. Backend defaults are loaded from `backend/app/settings.py`.
+4. `ParkingOccupancyService` loads the correct slot JSON file.
+5. The service loads the correct static parking image.
+6. `YoloDetector` runs pretrained YOLO and filters detections to class `car`.
+7. Each detected car bounding box is compared with each slot polygon.
+8. A slot is marked occupied when one of the occupancy rules passes.
+9. The backend returns total, occupied, available, and per-slot status.
+10. The frontend updates the dashboard layout.
 
 ## Occupancy Decision Rules
 
@@ -75,6 +77,22 @@ image_size = 1600
 ```
 
 The larger `image_size` is important because the parking images are wide and some vehicles are small in the original view.
+
+These defaults are configured in `backend/app/settings.py` and can be overridden with:
+
+```text
+PARKVIEWRT_MODEL_PATH
+PARKVIEWRT_CONFIDENCE
+PARKVIEWRT_IMAGE_SIZE
+PARKVIEWRT_SLOT_THRESHOLD
+PARKVIEWRT_BOX_THRESHOLD
+```
+
+The active values can be checked with:
+
+```text
+GET /api/config
+```
 
 ## Debug Flow
 

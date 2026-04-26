@@ -2,11 +2,13 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from app.schemas.parking import ParkingStatusResponse
+from app.settings import get_settings
 from app.services.occupancy import ParkingOccupancyService
 from app.services.video_snapshot import VideoSnapshotService
 
 
 router = APIRouter(prefix="/api", tags=["parking-status"])
+settings = get_settings()
 occupancy_service = ParkingOccupancyService()
 video_snapshot_service = VideoSnapshotService(occupancy_service)
 
@@ -16,6 +18,14 @@ def get_health_status():
     return {
         "status": "ok",
         "model_loaded": hasattr(occupancy_service.detector, "model"),
+        "locations": ["fci", "faie"],
+    }
+
+
+@router.get("/config")
+def get_backend_config():
+    return {
+        "detection": settings.detection.as_dict(),
         "locations": ["fci", "faie"],
     }
 

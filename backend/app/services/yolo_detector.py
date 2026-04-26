@@ -4,8 +4,9 @@ from typing import Any
 
 from ultralytics import YOLO
 
+from app.settings import get_settings
 
-DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "yolov8n.pt"
+DEFAULT_MODEL_PATH = get_settings().detection.model_path
 
 
 class YoloDetector:

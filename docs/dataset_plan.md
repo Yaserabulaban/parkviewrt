@@ -59,6 +59,18 @@ backend/app/models/yolov8n.pt
 
 If missing, Ultralytics can download the weights when network access is available.
 
+The active model and detection defaults are configured through environment variables:
+
+```text
+PARKVIEWRT_MODEL_PATH=backend/app/models/yolov8n.pt
+PARKVIEWRT_CONFIDENCE=0.20
+PARKVIEWRT_IMAGE_SIZE=1600
+PARKVIEWRT_SLOT_THRESHOLD=0.30
+PARKVIEWRT_BOX_THRESHOLD=0.20
+```
+
+These defaults are documented in `.env.example`.
+
 ## Real Video Requirements
 
 When real parking videos are obtained, the preferred requirements are:

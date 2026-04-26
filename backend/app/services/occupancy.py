@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from shapely.geometry import Point, Polygon, box
 
+from app.settings import AppSettings, get_settings
 from app.services.yolo_detector import get_yolo_detector
 
 
@@ -18,16 +19,31 @@ VALID_LOCATION_IDS = {"fci", "faie"}
 class ParkingOccupancyService:
     def __init__(
         self,
-        overlap_threshold: float = 0.30,
-        box_overlap_threshold: float = 0.20,
-        confidence_threshold: float = 0.20,
-        image_size: int = 1600,
+        settings: AppSettings | None = None,
+        overlap_threshold: float | None = None,
+        box_overlap_threshold: float | None = None,
+        confidence_threshold: float | None = None,
+        image_size: int | None = None,
     ):
-        self.overlap_threshold = overlap_threshold
-        self.box_overlap_threshold = box_overlap_threshold
-        self.confidence_threshold = confidence_threshold
-        self.image_size = image_size
-        self.detector = get_yolo_detector()
+        self.settings = settings or get_settings()
+        detection_settings = self.settings.detection
+        self.overlap_threshold = (
+            detection_settings.slot_overlap_threshold
+            if overlap_threshold is None
+            else overlap_threshold
+        )
+        self.box_overlap_threshold = (
+            detection_settings.box_overlap_threshold
+            if box_overlap_threshold is None
+            else box_overlap_threshold
+        )
+        self.confidence_threshold = (
+            detection_settings.confidence_threshold
+            if confidence_threshold is None
+            else confidence_threshold
+        )
+        self.image_size = detection_settings.image_size if image_size is None else image_size
+        self.detector = get_yolo_detector(detection_settings.model_path)
 
     def get_status(
         self,

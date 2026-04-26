@@ -89,6 +89,22 @@ def test_health_endpoint(monkeypatch):
     }
 
 
+def test_config_endpoint_returns_detection_settings():
+    client = TestClient(app)
+
+    response = client.get("/api/config")
+
+    assert response.status_code == 200
+    config = response.json()
+    assert config["locations"] == ["fci", "faie"]
+    model_path = config["detection"]["model_path"].replace("\\", "/")
+    assert model_path.endswith("backend/app/models/yolov8n.pt")
+    assert config["detection"]["confidence_threshold"] == 0.2
+    assert config["detection"]["image_size"] == 1600
+    assert config["detection"]["slot_overlap_threshold"] == 0.3
+    assert config["detection"]["box_overlap_threshold"] == 0.2
+
+
 def test_status_endpoint_returns_parking_counts(monkeypatch):
     monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
     client = TestClient(app)

@@ -26,6 +26,39 @@ Example response:
 }
 ```
 
+## Backend Configuration
+
+```text
+GET /api/config
+```
+
+Purpose: show the active backend model and default detection thresholds.
+
+Example response:
+
+```json
+{
+  "detection": {
+    "model_path": "backend/app/models/yolov8n.pt",
+    "confidence_threshold": 0.2,
+    "image_size": 1600,
+    "slot_overlap_threshold": 0.3,
+    "box_overlap_threshold": 0.2
+  },
+  "locations": ["fci", "faie"]
+}
+```
+
+The defaults can be changed with environment variables:
+
+```text
+PARKVIEWRT_MODEL_PATH
+PARKVIEWRT_CONFIDENCE
+PARKVIEWRT_IMAGE_SIZE
+PARKVIEWRT_SLOT_THRESHOLD
+PARKVIEWRT_BOX_THRESHOLD
+```
+
 ## Parking Status
 
 ```text

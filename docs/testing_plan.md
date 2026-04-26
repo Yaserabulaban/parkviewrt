@@ -80,6 +80,35 @@ Summary bar shows counts and thresholds
 Current FCI and FAIE target slots show occupied
 ```
 
+### Video Snapshot
+
+Place a video under:
+
+```text
+backend/app/data/videos/fci/
+backend/app/data/videos/faie/
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/api/status/fci/video-snapshot
+```
+
+Optional frame selection:
+
+```text
+http://127.0.0.1:8000/api/status/fci/video-snapshot?frame_index=10
+```
+
+Expected:
+
+```text
+JSON response contains normal parking counts
+JSON response includes source.type = video_snapshot
+JSON response includes selected frame_index
+```
+
 ### Threshold Tuning Tests
 
 Use query parameters to compare output:
@@ -150,12 +179,12 @@ syntax ok
 Backend tests to add:
 
 ```text
-GET /api/health returns status ok
-GET /api/status/fci returns expected response fields
-GET /api/status/faie returns expected response fields
-invalid location returns 404
-slot count matches slot JSON
-debug endpoint returns image/jpeg
+GET /api/health returns status ok: done
+GET /api/status/fci returns expected response fields: done
+GET /api/status/faie accepts tuning query params: done
+invalid location returns 404: done
+debug endpoint returns image/jpeg: done
+video snapshot endpoint returns status JSON: done
 ```
 
 Frontend tests are not required yet, but future checks can verify that:

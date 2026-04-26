@@ -127,3 +127,69 @@ backend/app/data/outputs/
 ```
 
 This folder is ignored by Git.
+
+## Video Snapshot Status
+
+```text
+GET /api/status/{location_id}/video-snapshot
+```
+
+Purpose: read one frame from the first available video for the selected location, run the same YOLO and slot-overlap logic used by static images, and return a parking status response.
+
+The backend looks for videos in:
+
+```text
+backend/app/data/videos/{location_id}/
+```
+
+Supported video extensions:
+
+```text
+.mp4
+.avi
+.mov
+.mkv
+```
+
+Optional query parameters:
+
+```text
+frame_index     Frame number to sample. Default: 0
+threshold       Slot polygon overlap threshold. Default: 0.30
+box_threshold   Detection-box overlap threshold. Default: 0.20
+confidence      YOLO confidence threshold. Default: 0.20
+image_size      YOLO inference image size. Default: 1600
+```
+
+Example:
+
+```text
+GET /api/status/fci/video-snapshot?frame_index=10
+```
+
+Example response:
+
+```json
+{
+  "location_id": "fci",
+  "total_slots": 8,
+  "occupied_count": 8,
+  "available_count": 0,
+  "slots": [
+    { "slot_id": "A1", "occupied": true }
+  ],
+  "source": {
+    "type": "video_snapshot",
+    "video_path": "backend/app/data/videos/fci/dummy_fci.mp4",
+    "frame_index": 10
+  }
+}
+```
+
+If no video exists:
+
+```json
+{
+  "detail": "No video found for location: fci"
+}
+```

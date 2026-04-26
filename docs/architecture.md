@@ -20,8 +20,10 @@ backend/app/
   api/routes/status.py
   services/yolo_detector.py
   services/occupancy.py
+  services/video_snapshot.py
   data/images/
   data/slots/
+  data/videos/
   data/outputs/
 
 frontend/
@@ -122,10 +124,24 @@ No custom model training has been performed yet.
 
 ## Future Video Direction
 
-When real videos are obtained, the planned backend flow is:
+Initial video snapshot support is now available. The backend can read a sampled frame from a local video file and process it through the same occupancy logic as static images.
+
+Video snapshot flow:
 
 ```text
-video input -> frame sampling -> YOLO detection -> slot overlap -> status response
+video file -> selected frame -> YOLO detection -> slot overlap -> status response
 ```
 
-The existing occupancy logic should be reused for both images and sampled video frames.
+The current endpoint is:
+
+```text
+GET /api/status/{location_id}/video-snapshot
+```
+
+Videos are expected under:
+
+```text
+backend/app/data/videos/{location_id}/
+```
+
+When real FCI and FAIE videos are obtained, the next step is to process frames periodically instead of only one requested snapshot.

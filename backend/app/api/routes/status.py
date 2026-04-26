@@ -3,10 +3,12 @@ from fastapi.responses import FileResponse
 
 from app.schemas.parking import ParkingStatusResponse
 from app.services.occupancy import ParkingOccupancyService
+from app.services.video_snapshot import VideoSnapshotService
 
 
 router = APIRouter(prefix="/api", tags=["parking-status"])
 occupancy_service = ParkingOccupancyService()
+video_snapshot_service = VideoSnapshotService(occupancy_service)
 
 
 @router.get("/health")
@@ -36,6 +38,30 @@ def get_parking_status(
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/status/{location_id}/video-snapshot")
+def get_video_snapshot_status(
+    location_id: str,
+    frame_index: int = 0,
+    threshold: float | None = None,
+    box_threshold: float | None = None,
+    confidence: float | None = None,
+    image_size: int | None = None,
+):
+    try:
+        return video_snapshot_service.get_snapshot_status(
+            location_id,
+            frame_index=frame_index,
+            overlap_threshold=threshold,
+            box_overlap_threshold=box_threshold,
+            confidence_threshold=confidence,
+            image_size=image_size,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

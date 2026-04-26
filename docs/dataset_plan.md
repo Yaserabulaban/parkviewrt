@@ -86,22 +86,43 @@ Avoid changing camera position after slot polygons are created. If the camera mo
 
 ## Planned Video Processing Flow
 
-The intended video flow is:
+The first video flow is now a snapshot pipeline:
 
 ```text
 load video
-sample one frame every N frames or every N seconds
+select one frame by frame_index
 run YOLO on sampled frame
 compare detections with slot polygons
-return latest occupancy status
+return occupancy status
 ```
 
-The existing static image occupancy service should be reused by extracting shared logic for:
+The current endpoint is:
 
 ```text
-process_image(location_id, image_path)
-process_frame(location_id, frame)
-process_video_snapshot(location_id, video_path)
+GET /api/status/{location_id}/video-snapshot
+```
+
+Videos should be placed in:
+
+```text
+backend/app/data/videos/{location_id}/
+```
+
+The current implementation reuses shared logic for:
+
+```text
+static image status
+single video frame status
+single video snapshot status
+```
+
+Future real-time behavior should extend this by sampling frames periodically:
+
+```text
+load video or stream
+sample one frame every N frames or every N seconds
+run existing frame occupancy logic
+publish latest occupancy status
 ```
 
 ## Future Dataset Expansion

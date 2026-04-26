@@ -44,6 +44,28 @@ class ParkingOccupancyService:
             confidence_threshold=confidence_threshold,
             image_size=image_size,
         )
+        return self._build_status_response(analysis)
+
+    def get_frame_status(
+        self,
+        location_id: str,
+        frame,
+        overlap_threshold: float | None = None,
+        box_overlap_threshold: float | None = None,
+        confidence_threshold: float | None = None,
+        image_size: int | None = None,
+    ) -> dict:
+        analysis = self._analyze_location(
+            location_id,
+            image_source=frame,
+            overlap_threshold=overlap_threshold,
+            box_overlap_threshold=box_overlap_threshold,
+            confidence_threshold=confidence_threshold,
+            image_size=image_size,
+        )
+        return self._build_status_response(analysis)
+
+    def _build_status_response(self, analysis: dict) -> dict:
         slots = [
             {"slot_id": slot["slot_id"], "occupied": slot["occupied"]}
             for slot in analysis["slots"]
@@ -92,6 +114,7 @@ class ParkingOccupancyService:
     def _analyze_location(
         self,
         location_id: str,
+        image_source=None,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -115,9 +138,10 @@ class ParkingOccupancyService:
         )
         resolved_image_size = self._resolve_image_size(image_size)
         slot_data = self._load_slots(normalized_location_id)
-        image_path = self._get_image_path(normalized_location_id)
+        image_path = self._get_image_path(normalized_location_id) if image_source is None else None
+        resolved_image_source = image_path if image_source is None else image_source
         detections = self.detector.detect_cars(
-            image_path,
+            resolved_image_source,
             confidence_threshold=resolved_confidence_threshold,
             image_size=resolved_image_size,
         )

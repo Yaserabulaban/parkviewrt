@@ -48,6 +48,33 @@ class FakeOccupancyService:
         return debug_image_path
 
 
+class FakeVideoSnapshotService:
+    def get_snapshot_status(
+        self,
+        location_id,
+        frame_index=0,
+        overlap_threshold=None,
+        box_overlap_threshold=None,
+        confidence_threshold=None,
+        image_size=None,
+    ):
+        if location_id not in {"fci", "faie"}:
+            raise FileNotFoundError(f"No video found for location: {location_id}")
+
+        return {
+            "location_id": location_id,
+            "total_slots": 1,
+            "occupied_count": 1,
+            "available_count": 0,
+            "slots": [{"slot_id": "A1", "occupied": True}],
+            "source": {
+                "type": "video_snapshot",
+                "video_path": "dummy.mp4",
+                "frame_index": frame_index,
+            },
+        }
+
+
 def test_health_endpoint(monkeypatch):
     monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
     client = TestClient(app)
@@ -119,3 +146,27 @@ def test_debug_endpoint_returns_jpeg(monkeypatch):
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
     assert response.content.startswith(b"\xff\xd8")
+
+
+def test_video_snapshot_endpoint_returns_status(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get("/api/status/fci/video-snapshot", params={"frame_index": 3})
+
+    assert response.status_code == 200
+    assert response.json()["source"] == {
+        "type": "video_snapshot",
+        "video_path": "dummy.mp4",
+        "frame_index": 3,
+    }
+
+
+def test_video_snapshot_endpoint_returns_404_when_video_missing(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get("/api/status/unknown/video-snapshot")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "No video found for location: unknown"}

@@ -137,6 +137,14 @@ run existing frame occupancy logic
 publish latest occupancy status
 ```
 
+The current backend also supports a multi-frame test endpoint:
+
+```text
+GET /api/status/{location_id}/video-samples
+```
+
+This endpoint samples a fixed number of frames from a local video and calculates an aggregated occupancy summary using majority voting across sampled frames.
+
 ## Future Dataset Expansion
 
 If pretrained YOLO is not accurate enough for the final demo, the next dataset step is to prepare a custom detection dataset.

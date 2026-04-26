@@ -226,3 +226,76 @@ If no video exists:
   "detail": "No video found for location: fci"
 }
 ```
+
+## Video Sampled Status
+
+```text
+GET /api/status/{location_id}/video-samples
+```
+
+Purpose: sample multiple frames from the first available video for the selected location, process each frame with the same YOLO and slot-overlap logic, and return both per-frame results and an aggregated slot summary.
+
+Optional query parameters:
+
+```text
+sample_count    Number of frames to sample. Default: 5. Range: 1-20
+start_frame     First frame to sample. Default: 0
+frame_step      Number of frames between samples. Default: 30
+threshold       Slot polygon overlap threshold. Default: configured backend value
+box_threshold   Detection-box overlap threshold. Default: configured backend value
+confidence      YOLO confidence threshold. Default: configured backend value
+image_size      YOLO inference image size. Default: configured backend value
+```
+
+Example:
+
+```text
+GET /api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
+```
+
+Example response:
+
+```json
+{
+  "location_id": "fci",
+  "source": {
+    "type": "video_samples",
+    "video_path": "backend/app/data/videos/fci/example.mp4",
+    "frame_count": 300,
+    "fps": 30.0,
+    "sample_count": 5,
+    "start_frame": 0,
+    "frame_step": 30,
+    "frame_indices": [0, 30, 60, 90, 120]
+  },
+  "summary": {
+    "total_slots": 8,
+    "occupied_count": 8,
+    "available_count": 0,
+    "sample_count": 5,
+    "latest_frame_index": 120,
+    "slots": [
+      {
+        "slot_id": "A1",
+        "occupied_frames": 5,
+        "sample_count": 5,
+        "occupancy_ratio": 1.0,
+        "occupied": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "frame_index": 0,
+      "total_slots": 8,
+      "occupied_count": 8,
+      "available_count": 0,
+      "slots": [
+        { "slot_id": "A1", "occupied": true }
+      ]
+    }
+  ]
+}
+```
+
+The aggregated `summary.slots[].occupied` value is based on majority voting across sampled frames. A slot is considered occupied when it is occupied in at least half of the sampled frames.

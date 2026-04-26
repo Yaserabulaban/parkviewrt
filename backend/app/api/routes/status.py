@@ -76,6 +76,34 @@ def get_video_snapshot_status(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@router.get("/status/{location_id}/video-samples")
+def get_video_sampled_status(
+    location_id: str,
+    sample_count: int = 5,
+    start_frame: int = 0,
+    frame_step: int = 30,
+    threshold: float | None = None,
+    box_threshold: float | None = None,
+    confidence: float | None = None,
+    image_size: int | None = None,
+):
+    try:
+        return video_snapshot_service.get_sampled_status(
+            location_id,
+            sample_count=sample_count,
+            start_frame=start_frame,
+            frame_step=frame_step,
+            overlap_threshold=threshold,
+            box_overlap_threshold=box_threshold,
+            confidence_threshold=confidence,
+            image_size=image_size,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @router.get("/debug/{location_id}")
 def get_debug_visualization(
     location_id: str,

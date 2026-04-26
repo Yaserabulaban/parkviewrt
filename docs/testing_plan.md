@@ -109,6 +109,31 @@ JSON response includes source.type = video_snapshot
 JSON response includes selected frame_index
 ```
 
+### Multi-Frame Video Samples
+
+Place a video under:
+
+```text
+backend/app/data/videos/fci/
+backend/app/data/videos/faie/
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
+```
+
+Expected:
+
+```text
+JSON response includes source.type = video_samples
+source.frame_indices lists the sampled frame numbers
+samples contains one occupancy result per sampled frame
+summary contains majority-vote occupancy per slot
+summary.sample_count matches the number of processed frames
+```
+
 ### Threshold Tuning Tests
 
 Use query parameters to compare output:
@@ -185,6 +210,7 @@ GET /api/status/faie accepts tuning query params: done
 invalid location returns 404: done
 debug endpoint returns image/jpeg: done
 video snapshot endpoint returns status JSON: done
+video samples endpoint returns aggregated status JSON: done
 ```
 
 Frontend tests are not required yet, but future checks can verify that:

@@ -156,6 +156,18 @@ The current endpoint is:
 GET /api/status/{location_id}/video-snapshot
 ```
 
+Multi-frame sampling is also available:
+
+```text
+GET /api/status/{location_id}/video-samples
+```
+
+Video sampling flow:
+
+```text
+video file -> frame indices -> YOLO per frame -> per-frame occupancy -> majority-vote summary
+```
+
 Videos are expected under:
 
 ```text

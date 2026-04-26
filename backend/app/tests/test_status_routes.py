@@ -74,6 +74,60 @@ class FakeVideoSnapshotService:
             },
         }
 
+    def get_sampled_status(
+        self,
+        location_id,
+        sample_count=5,
+        start_frame=0,
+        frame_step=30,
+        overlap_threshold=None,
+        box_overlap_threshold=None,
+        confidence_threshold=None,
+        image_size=None,
+    ):
+        if location_id not in {"fci", "faie"}:
+            raise FileNotFoundError(f"No video found for location: {location_id}")
+
+        return {
+            "location_id": location_id,
+            "source": {
+                "type": "video_samples",
+                "video_path": "dummy.mp4",
+                "frame_count": 120,
+                "fps": 30.0,
+                "sample_count": sample_count,
+                "start_frame": start_frame,
+                "frame_step": frame_step,
+                "frame_indices": [start_frame + index * frame_step for index in range(sample_count)],
+            },
+            "summary": {
+                "total_slots": 1,
+                "occupied_count": 1,
+                "available_count": 0,
+                "sample_count": sample_count,
+                "latest_frame_index": start_frame + (sample_count - 1) * frame_step,
+                "slots": [
+                    {
+                        "slot_id": "A1",
+                        "occupied_frames": sample_count,
+                        "sample_count": sample_count,
+                        "occupancy_ratio": 1.0,
+                        "occupied": True,
+                    }
+                ],
+            },
+            "samples": [
+                {
+                    "frame_index": start_frame + index * frame_step,
+                    "total_slots": 1,
+                    "occupied_count": 1,
+                    "available_count": 0,
+                    "slots": [{"slot_id": "A1", "occupied": True}],
+                }
+                for index in range(sample_count)
+            ],
+        }
+
 
 def test_health_endpoint(monkeypatch):
     monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
@@ -183,6 +237,34 @@ def test_video_snapshot_endpoint_returns_404_when_video_missing(monkeypatch):
     client = TestClient(app)
 
     response = client.get("/api/status/unknown/video-snapshot")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "No video found for location: unknown"}
+
+
+def test_video_samples_endpoint_returns_aggregated_status(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/fci/video-samples",
+        params={"sample_count": 3, "start_frame": 5, "frame_step": 10},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["source"]["type"] == "video_samples"
+    assert data["source"]["frame_indices"] == [5, 15, 25]
+    assert data["summary"]["sample_count"] == 3
+    assert data["summary"]["slots"][0]["occupancy_ratio"] == 1.0
+    assert len(data["samples"]) == 3
+
+
+def test_video_samples_endpoint_returns_404_when_video_missing(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get("/api/status/unknown/video-samples")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "No video found for location: unknown"}

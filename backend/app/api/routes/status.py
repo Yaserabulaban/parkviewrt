@@ -10,9 +10,21 @@ occupancy_service = ParkingOccupancyService()
 
 
 @router.get("/status/{location_id}", response_model=ParkingStatusResponse)
-def get_parking_status(location_id: str):
+def get_parking_status(
+    location_id: str,
+    threshold: float | None = None,
+    box_threshold: float | None = None,
+    confidence: float | None = None,
+    image_size: int | None = None,
+):
     try:
-        return occupancy_service.get_status(location_id)
+        return occupancy_service.get_status(
+            location_id,
+            overlap_threshold=threshold,
+            box_overlap_threshold=box_threshold,
+            confidence_threshold=confidence,
+            image_size=image_size,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -20,9 +32,21 @@ def get_parking_status(location_id: str):
 
 
 @router.get("/debug/{location_id}")
-def get_debug_visualization(location_id: str):
+def get_debug_visualization(
+    location_id: str,
+    threshold: float | None = None,
+    box_threshold: float | None = None,
+    confidence: float | None = None,
+    image_size: int | None = None,
+):
     try:
-        image_path = occupancy_service.create_debug_image(location_id)
+        image_path = occupancy_service.create_debug_image(
+            location_id,
+            overlap_threshold=threshold,
+            box_overlap_threshold=box_threshold,
+            confidence_threshold=confidence,
+            image_size=image_size,
+        )
         return FileResponse(
             image_path,
             media_type="image/jpeg",

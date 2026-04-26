@@ -15,8 +15,18 @@ class YoloDetector:
         self.model = YOLO(str(model_path))
         self.allowed_classes = {"car"}
 
-    def detect_cars(self, image: str | Path | Any) -> list[dict]:
-        results = self.model(str(image) if isinstance(image, Path) else image, verbose=False)
+    def detect_cars(
+        self,
+        image: str | Path | Any,
+        confidence_threshold: float = 0.25,
+        image_size: int = 640,
+    ) -> list[dict]:
+        results = self.model(
+            str(image) if isinstance(image, Path) else image,
+            conf=confidence_threshold,
+            imgsz=image_size,
+            verbose=False,
+        )
         detections = []
 
         for result in results:

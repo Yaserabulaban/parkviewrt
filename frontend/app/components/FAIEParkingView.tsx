@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, RefreshCw } from 'lucide-react';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
+import { getParkingDebugImageUrl } from '@/api/parkingApi';
 
 export default function FAIEParkingView() {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export default function FAIEParkingView() {
         second: '2-digit',
       })
     : 'Not updated yet';
+  const debugImageUrl = getParkingDebugImageUrl('faie');
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -70,6 +72,13 @@ export default function FAIEParkingView() {
                   className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
                 />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+
+              <Button asChild variant="outline">
+                <a href={debugImageUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Detection Debug
+                </a>
               </Button>
 
               <span className="text-sm text-gray-600">

@@ -12,3 +12,7 @@ export async function getParkingStatus(
 
   return response.json();
 }
+
+export function getParkingDebugImageUrl(locationId: "fci" | "faie") {
+  return `${API_BASE_URL}/api/debug/${locationId}`;
+}

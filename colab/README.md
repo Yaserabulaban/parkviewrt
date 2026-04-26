@@ -63,6 +63,18 @@ available_count
 
 Use the debug images to visually confirm whether the model is detecting the correct cars and whether the slot occupancy logic matches the parking polygons.
 
+To generate the FYP-ready Markdown report after running the notebook:
+
+```powershell
+py -3.11 colab/generate_evaluation_report.py
+```
+
+The report is written to:
+
+```text
+docs/model_evaluation.md
+```
+
 ## Current Decision
 
 Based on the current FCI and FAIE comparison run, `yolov8n.pt` is kept as the production backend model for now.

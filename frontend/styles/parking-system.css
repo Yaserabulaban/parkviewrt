@@ -1,0 +1,487 @@
+/* MMU Car Park System - Custom CSS Styles */
+
+/* ===== HOME PAGE ===== */
+.home-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+  padding: 2rem;
+}
+
+.home-card {
+  max-width: 42rem;
+  width: 100%;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 3rem;
+  text-align: center;
+}
+
+.home-logo {
+  width: 16rem;
+  margin: 0 auto 1.5rem auto;
+}
+
+.home-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.home-subtitle {
+  font-size: 1.25rem;
+  color: #374151;
+  margin-bottom: 2rem;
+}
+
+.home-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-button {
+  width: 16rem;
+  height: 4rem;
+  font-size: 1.125rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.home-button:hover {
+  background-color: #2563eb;
+}
+
+@media (min-width: 768px) {
+  .home-buttons-container {
+    flex-direction: row;
+  }
+}
+
+/* ===== PARKING VIEW PAGES ===== */
+.parking-container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 2rem;
+}
+
+.parking-content {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+.parking-header {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.back-button {
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #f3f4f6;
+}
+
+.back-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.parking-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.stats-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stat-indicator {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem;
+}
+
+.stat-indicator.available {
+  background-color: #10b981;
+}
+
+.stat-indicator.occupied {
+  background-color: #ef4444;
+}
+
+.stat-text {
+  font-size: 1.125rem;
+}
+
+.parking-logo {
+  width: 12rem;
+}
+
+.parking-layout-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.parking-layout-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== PARKING SLOT ===== */
+.parking-slot {
+  width: 6rem;
+  height: 8rem;
+  border-width: 4px;
+  border-style: solid;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  transition: all 0.3s;
+  font-size: 1.125rem;
+}
+
+.parking-slot.empty {
+  background-color: #10b981;
+  border-color: #047857;
+}
+
+.parking-slot.occupied {
+  background-color: #ef4444;
+  border-color: #b91c1c;
+}
+
+/* ===== FCI PARKING - ANGLED LAYOUT ===== */
+.fci-layout {
+  position: relative;
+}
+
+.fci-parking-rows {
+  display: flex;
+  gap: 3rem;
+  justify-content: center;
+}
+
+.fci-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fci-row-label {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.fci-slot-left {
+  transform: rotate(-45deg);
+  transform-origin: right;
+}
+
+.fci-slot-right {
+  transform: rotate(45deg);
+  transform-origin: left;
+}
+
+.fci-drive-lane {
+  width: 8rem;
+  background-color: #d1d5db;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.fci-lane-markers {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 1rem 0;
+}
+
+.fci-lane-marker {
+  width: 0.25rem;
+  height: 3rem;
+  background-color: #facc15;
+  margin: 0 auto;
+  border-radius: 0.125rem;
+}
+
+.fci-lane-text {
+  transform: rotate(-90deg);
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* ===== FAIE PARKING - PERPENDICULAR LAYOUT ===== */
+.faie-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.faie-row-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.faie-row-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.faie-row-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+  width: 4rem;
+}
+
+.faie-slots {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.faie-drive-lane {
+  height: 4rem;
+  background-color: #d1d5db;
+  border-radius: 0.5rem;
+  position: relative;
+  margin-left: 5rem;
+}
+
+.faie-lane-markers {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.faie-lane-marker {
+  height: 0.25rem;
+  width: 4rem;
+  background-color: #facc15;
+  border-radius: 0.125rem;
+}
+
+/* ===== ENTRANCE/EXIT INDICATORS ===== */
+.entrance-exit-container {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.entrance-exit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.entrance-icon {
+  width: 2rem;
+  height: 2rem;
+  background-color: #059669;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.exit-icon {
+  width: 2rem;
+  height: 2rem;
+  background-color: #dc2626;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+/* ===== UTILITY CLASSES ===== */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.gap-8 {
+  gap: 2rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
+.mt-8 {
+  margin-top: 2rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.p-8 {
+  padding: 2rem;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.parking-slot {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .parking-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .parking-logo {
+    width: 8rem;
+    margin-top: 1rem;
+  }
+
+  .fci-parking-rows {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .fci-drive-lane {
+    width: 100%;
+    height: 4rem;
+  }
+
+  .fci-lane-text {
+    transform: none;
+  }
+
+  .faie-slots {
+    flex-wrap: wrap;
+  }
+}

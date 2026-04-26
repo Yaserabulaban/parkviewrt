@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
 
 export default function FCIParkingView() {
   const navigate = useNavigate();
-  const { data, loading, error } = useParkingStatus('fci');
+  const { data, loading, refreshing, error, lastUpdated, refetch } = useParkingStatus('fci');
 
   const leftSlotIds = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'];
-  const rightSlotIds = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'];
+  const rightSlotIds = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'];
 
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
@@ -28,6 +28,13 @@ export default function FCIParkingView() {
 
   const occupiedCount = data?.occupied_count ?? 0;
   const availableCount = data?.available_count ?? 0;
+  const lastUpdatedLabel = lastUpdated
+    ? lastUpdated.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : 'Not updated yet';
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -46,6 +53,23 @@ export default function FCIParkingView() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               FCI Parking
             </h1>
+
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Button
+                onClick={refetch}
+                disabled={loading || refreshing}
+                variant="outline"
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
+                />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+
+              <span className="text-sm text-gray-600">
+                Last updated: {lastUpdatedLabel}
+              </span>
+            </div>
 
             {loading && (
               <p className="text-blue-600 mb-4">Loading parking status...</p>
@@ -106,7 +130,7 @@ export default function FCIParkingView() {
 
               <div className="flex flex-col gap-4">
                 <div className="text-center text-sm font-semibold text-gray-600 mb-2">
-                  Row B
+                  Row F
                 </div>
                 {rightSide.map((spot) => (
                   <div key={spot.id} className="transform rotate-45 origin-left">

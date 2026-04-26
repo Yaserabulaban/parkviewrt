@@ -1,17 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
 
 export default function FAIEParkingView() {
   const navigate = useNavigate();
-  const { data, loading, error } = useParkingStatus('faie');
+  const { data, loading, refreshing, error, lastUpdated, refetch } = useParkingStatus('faie');
 
-  const row1Ids = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6'];
-  const row2Ids = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'];
-  const row3Ids = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
+  const row1Ids = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'];
+  const row2Ids = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8'];
+  const row3Ids = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'];
 
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
@@ -34,6 +34,13 @@ export default function FAIEParkingView() {
 
   const occupiedCount = data?.occupied_count ?? 0;
   const availableCount = data?.available_count ?? 0;
+  const lastUpdatedLabel = lastUpdated
+    ? lastUpdated.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : 'Not updated yet';
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -52,6 +59,23 @@ export default function FAIEParkingView() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               FAIE Parking
             </h1>
+
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Button
+                onClick={refetch}
+                disabled={loading || refreshing}
+                variant="outline"
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
+                />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+
+              <span className="text-sm text-gray-600">
+                Last updated: {lastUpdatedLabel}
+              </span>
+            </div>
 
             {loading && (
               <p className="text-blue-600 mb-4">Loading parking status...</p>
@@ -88,7 +112,7 @@ export default function FAIEParkingView() {
           <div className="space-y-8">
             <div>
               <div className="flex items-center gap-4 mb-4">
-                <span className="text-sm font-semibold text-gray-600 w-16">Row C</span>
+                <span className="text-sm font-semibold text-gray-600 w-16">Row B</span>
                 <div className="flex gap-6">
                   {row1.map((spot) => (
                     <ParkingSlot key={spot.id} id={spot.id} isOccupied={spot.isOccupied} />

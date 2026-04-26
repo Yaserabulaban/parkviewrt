@@ -19,16 +19,16 @@ export const parkingLayouts: Record<'fci' | 'faie', ParkingLayoutConfig> = {
         ]
       },
       {
-        rowLabel: 'Row B',
+        rowLabel: 'Row F',
         slots: [
-          { slotId: 'B1', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B2', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B3', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B4', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B5', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B6', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B7', rowLabel: 'Row B', shape: 'angled-right' },
-          { slotId: 'B8', rowLabel: 'Row B', shape: 'angled-right' }
+          { slotId: 'F1', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F2', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F3', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F4', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F5', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F6', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F7', rowLabel: 'Row F', shape: 'angled-right' },
+          { slotId: 'F8', rowLabel: 'Row F', shape: 'angled-right' }
         ]
       }
     ]
@@ -39,14 +39,14 @@ export const parkingLayouts: Record<'fci' | 'faie', ParkingLayoutConfig> = {
     title: 'FAIE Parking',
     rows: [
       {
-        rowLabel: 'Row C',
+        rowLabel: 'Row B',
         slots: [
-          { slotId: 'C1', rowLabel: 'Row C', shape: 'perpendicular' },
-          { slotId: 'C2', rowLabel: 'Row C', shape: 'perpendicular' },
-          { slotId: 'C3', rowLabel: 'Row C', shape: 'perpendicular' },
-          { slotId: 'C4', rowLabel: 'Row C', shape: 'perpendicular' },
-          { slotId: 'C5', rowLabel: 'Row C', shape: 'perpendicular' },
-          { slotId: 'C6', rowLabel: 'Row C', shape: 'perpendicular' }
+          { slotId: 'B1', rowLabel: 'Row B', shape: 'perpendicular' },
+          { slotId: 'B2', rowLabel: 'Row B', shape: 'perpendicular' },
+          { slotId: 'B3', rowLabel: 'Row B', shape: 'perpendicular' },
+          { slotId: 'B4', rowLabel: 'Row B', shape: 'perpendicular' },
+          { slotId: 'B5', rowLabel: 'Row B', shape: 'perpendicular' },
+          { slotId: 'B6', rowLabel: 'Row B', shape: 'perpendicular' }
         ]
       },
       {

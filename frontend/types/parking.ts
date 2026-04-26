@@ -12,4 +12,9 @@ export interface ParkingStatusResponse {
   available_count: number;
   slots: ParkingSlotDto[];
   updated_at?: string;
+  source?: {
+    type: "video_snapshot";
+    video_path: string;
+    frame_index: number;
+  };
 }

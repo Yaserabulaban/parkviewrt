@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Film, RefreshCw } from 'lucide-react';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
@@ -8,7 +8,16 @@ import { getParkingDebugImageUrl } from '@/api/parkingApi';
 
 export default function FCIParkingView() {
   const navigate = useNavigate();
-  const { data, loading, refreshing, error, lastUpdated, refetch } = useParkingStatus('fci');
+  const {
+    data,
+    loading,
+    refreshing,
+    snapshotLoading,
+    error,
+    lastUpdated,
+    refetch,
+    fetchVideoSnapshot,
+  } = useParkingStatus('fci');
 
   const leftSlotIds = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'];
   const rightSlotIds = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'];
@@ -37,6 +46,9 @@ export default function FCIParkingView() {
       })
     : 'Not updated yet';
   const debugImageUrl = getParkingDebugImageUrl('fci');
+  const statusSourceLabel = data?.source
+    ? `Video frame ${data.source.frame_index}`
+    : 'Static image';
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -59,13 +71,22 @@ export default function FCIParkingView() {
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Button
                 onClick={refetch}
-                disabled={loading || refreshing}
+                disabled={loading || refreshing || snapshotLoading}
                 variant="outline"
               >
                 <RefreshCw
                   className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
                 />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+
+              <Button
+                onClick={() => fetchVideoSnapshot(0)}
+                disabled={loading || refreshing || snapshotLoading}
+                variant="outline"
+              >
+                <Film className="mr-2 h-4 w-4" />
+                {snapshotLoading ? 'Sampling...' : 'Video Snapshot'}
               </Button>
 
               <Button asChild variant="outline">
@@ -76,7 +97,7 @@ export default function FCIParkingView() {
               </Button>
 
               <span className="text-sm text-gray-600">
-                Last updated: {lastUpdatedLabel}
+                Last updated: {lastUpdatedLabel} | Source: {statusSourceLabel}
               </span>
             </div>
 

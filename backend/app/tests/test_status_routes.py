@@ -152,7 +152,7 @@ def test_config_endpoint_returns_detection_settings():
     config = response.json()
     assert config["locations"] == ["fci", "faie"]
     model_path = config["detection"]["model_path"].replace("\\", "/")
-    assert model_path.endswith("backend/app/models/yolov8n.pt")
+    assert model_path.endswith("backend/app/models/yolo11n.pt")
     assert config["detection"]["confidence_threshold"] == 0.2
     assert config["detection"]["image_size"] == 1600
     assert config["detection"]["slot_overlap_threshold"] == 0.3

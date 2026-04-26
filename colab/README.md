@@ -77,7 +77,7 @@ docs/model_evaluation.md
 
 ## Current Decision
 
-Based on the current FCI and FAIE comparison run, `yolov8n.pt` is kept as the production backend model for now.
+Based on the current FCI and FAIE comparison run, `yolo11n.pt` is kept as the production backend model for now.
 
 Reason:
 

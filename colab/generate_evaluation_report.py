@@ -213,7 +213,7 @@ def main() -> None:
     parser.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY_PATH)
     parser.add_argument("--slots", type=Path, default=DEFAULT_SLOTS_PATH)
     parser.add_argument("--output", type=Path, default=DEFAULT_REPORT_PATH)
-    parser.add_argument("--selected-model", default="yolov8n.pt")
+    parser.add_argument("--selected-model", default="yolo11n.pt")
     args = parser.parse_args()
 
     summary_rows = read_csv(args.summary)

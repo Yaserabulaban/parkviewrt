@@ -84,7 +84,7 @@ def get_settings() -> AppSettings:
     detection = DetectionSettings(
         model_path=_env_path(
             "PARKVIEWRT_MODEL_PATH",
-            BASE_DIR / "models" / "yolov8n.pt",
+            BASE_DIR / "models" / "yolo11n.pt",
         ),
         confidence_threshold=_validate_unit_interval(
             _env_float("PARKVIEWRT_CONFIDENCE", 0.20),

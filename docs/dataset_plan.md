@@ -46,7 +46,7 @@ Pretrained YOLO is used without custom training.
 The project currently uses:
 
 ```text
-YOLO pretrained model: yolov8n.pt
+YOLO pretrained model: yolo11n.pt
 Detection class: car only
 No custom dataset training yet
 ```
@@ -54,7 +54,7 @@ No custom dataset training yet
 The model weights are stored locally but ignored by Git:
 
 ```text
-backend/app/models/yolov8n.pt
+backend/app/models/yolo11n.pt
 ```
 
 If missing, Ultralytics can download the weights when network access is available.
@@ -62,7 +62,7 @@ If missing, Ultralytics can download the weights when network access is availabl
 The active model and detection defaults are configured through environment variables:
 
 ```text
-PARKVIEWRT_MODEL_PATH=backend/app/models/yolov8n.pt
+PARKVIEWRT_MODEL_PATH=backend/app/models/yolo11n.pt
 PARKVIEWRT_CONFIDENCE=0.20
 PARKVIEWRT_IMAGE_SIZE=1600
 PARKVIEWRT_SLOT_THRESHOLD=0.30

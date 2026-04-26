@@ -39,7 +39,7 @@ Example response:
 ```json
 {
   "detection": {
-    "model_path": "backend/app/models/yolov8n.pt",
+    "model_path": "backend/app/models/yolo11n.pt",
     "confidence_threshold": 0.2,
     "image_size": 1600,
     "slot_overlap_threshold": 0.3,

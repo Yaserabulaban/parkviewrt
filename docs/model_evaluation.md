@@ -19,10 +19,10 @@ The current labelled static images contain the eight selected slots for each loc
 ## Selected Model
 
 ```text
-yolov8n.pt
+yolo11n.pt
 ```
 
-`yolov8n.pt` remains the production backend model for now. The comparison confirms that it correctly marks all labelled static slots as occupied, and the debug images were visually reliable for the current MMU parking images.
+`yolo11n.pt` remains the production backend model for now. The comparison confirms that it correctly marks all labelled static slots as occupied, and the debug images were visually reliable for the current MMU parking images.
 
 All compared models reached full slot accuracy on this small static-image set. Because the current test set is limited, the production choice also considers visual debug quality, existing backend compatibility, and the need to retest once real videos are available.
 
@@ -32,9 +32,9 @@ This decision should be revisited after real FCI and FAIE videos are collected, 
 
 | Model | Locations | Total Detections | Avg Slot Accuracy | Avg Inference (ms) | Min Slot Overlap | Min Box Overlap |
 | --- | --- | --- | --- | --- | --- | --- |
-| yolov8n.pt | 2 | 124 | 100.00% | 1064.76 | 78.99% | 62.34% |
 | yolo11n.pt | 2 | 138 | 100.00% | 884.84 | 79.93% | 61.45% |
 | yolo26n.pt | 2 | 130 | 100.00% | 852.36 | 79.81% | 62.33% |
+| yolov8n.pt | 2 | 124 | 100.00% | 1064.76 | 78.99% | 62.34% |
 
 ## Location Results
 
@@ -51,22 +51,22 @@ This decision should be revisited after real FCI and FAIE videos are collected, 
 
 | Location | Slot | Occupied | Slot Overlap | Box Overlap |
 | --- | --- | --- | --- | --- |
-| FCI | A1 | True | 89.44% | 74.30% |
-| FCI | A2 | True | 92.93% | 74.11% |
-| FCI | A3 | True | 85.88% | 70.81% |
-| FCI | A4 | True | 93.29% | 73.34% |
-| FCI | A5 | True | 78.99% | 71.78% |
-| FCI | A6 | True | 80.51% | 71.45% |
-| FCI | A7 | True | 85.56% | 68.30% |
-| FCI | A8 | True | 82.46% | 70.78% |
-| FAIE | B1 | True | 96.21% | 62.34% |
-| FAIE | B2 | True | 93.05% | 68.73% |
-| FAIE | B3 | True | 93.81% | 74.57% |
-| FAIE | B4 | True | 94.51% | 67.73% |
-| FAIE | B5 | True | 95.67% | 62.61% |
-| FAIE | B6 | True | 91.92% | 67.42% |
-| FAIE | B7 | True | 94.24% | 77.23% |
-| FAIE | B8 | True | 87.35% | 86.70% |
+| FCI | A1 | True | 89.16% | 72.62% |
+| FCI | A2 | True | 93.09% | 74.23% |
+| FCI | A3 | True | 86.16% | 71.03% |
+| FCI | A4 | True | 93.27% | 73.26% |
+| FCI | A5 | True | 80.56% | 71.51% |
+| FCI | A6 | True | 79.93% | 71.93% |
+| FCI | A7 | True | 82.84% | 70.51% |
+| FCI | A8 | True | 84.46% | 69.49% |
+| FAIE | B1 | True | 96.29% | 61.45% |
+| FAIE | B2 | True | 93.40% | 69.40% |
+| FAIE | B3 | True | 93.23% | 74.71% |
+| FAIE | B4 | True | 93.57% | 68.62% |
+| FAIE | B5 | True | 96.03% | 62.62% |
+| FAIE | B6 | True | 93.08% | 66.77% |
+| FAIE | B7 | True | 93.15% | 78.22% |
+| FAIE | B8 | True | 86.11% | 86.84% |
 
 ## Generated Artifacts
 

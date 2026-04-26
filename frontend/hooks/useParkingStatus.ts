@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getParkingStatus,
+  getParkingVideoSamplesStatus,
   getParkingVideoSnapshotStatus,
 } from "../api/parkingApi";
-import type { ParkingStatusResponse } from "../types/parking";
+import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
+
+type StatusMode = "static" | "video_snapshot" | "video_samples";
 
 export function useParkingStatus(locationId: "fci" | "faie") {
   const [data, setData] = useState<ParkingStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [sampleLoading, setSampleLoading] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [statusMode, setStatusMode] = useState<StatusMode>("static");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const hasLoaded = useRef(false);
@@ -24,6 +30,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       setError(null);
       const result = await getParkingStatus(locationId);
       setData(result);
+      setStatusMode("static");
       setLastUpdated(new Date());
       hasLoaded.current = true;
     } catch (err) {
@@ -40,6 +47,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       setError(null);
       const result = await getParkingVideoSnapshotStatus(locationId, frameIndex);
       setData(result);
+      setStatusMode("video_snapshot");
       setLastUpdated(new Date());
       hasLoaded.current = true;
     } catch (err) {
@@ -50,18 +58,81 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     }
   }, [locationId]);
 
+  const fetchVideoSamples = useCallback(
+    async (sampleCount = 5, startFrame = 0, frameStep = 30) => {
+      try {
+        setSampleLoading(true);
+        setError(null);
+        const result = await getParkingVideoSamplesStatus(
+          locationId,
+          sampleCount,
+          startFrame,
+          frameStep
+        );
+        setData(mapVideoSamplesToStatus(result));
+        setStatusMode("video_samples");
+        setLastUpdated(new Date());
+        hasLoaded.current = true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+        setSampleLoading(false);
+      }
+    },
+    [locationId]
+  );
+
   useEffect(() => {
     fetchStatus();
   }, [fetchStatus]);
+
+  useEffect(() => {
+    if (!autoRefresh) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (statusMode === "video_samples") {
+        fetchVideoSamples();
+      } else if (statusMode === "video_snapshot") {
+        fetchVideoSnapshot(0);
+      } else {
+        fetchStatus();
+      }
+    }, 15000);
+
+    return () => window.clearInterval(intervalId);
+  }, [autoRefresh, fetchStatus, fetchVideoSamples, fetchVideoSnapshot, statusMode]);
 
   return {
     data,
     loading,
     refreshing,
     snapshotLoading,
+    sampleLoading,
+    autoRefresh,
+    setAutoRefresh,
     error,
     lastUpdated,
     refetch: fetchStatus,
     fetchVideoSnapshot,
+    fetchVideoSamples,
+  };
+}
+
+function mapVideoSamplesToStatus(
+  result: VideoSamplesResponse
+): ParkingStatusResponse {
+  return {
+    location_id: result.location_id,
+    total_slots: result.summary.total_slots,
+    occupied_count: result.summary.occupied_count,
+    available_count: result.summary.available_count,
+    slots: result.summary.slots.map((slot) => ({
+      slot_id: slot.slot_id,
+      occupied: slot.occupied,
+    })),
+    source: result.source,
   };
 }

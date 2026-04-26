@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { ArrowLeft, ExternalLink, Film, RefreshCw } from 'lucide-react';
+import { Switch } from './ui/switch';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
@@ -13,10 +14,14 @@ export default function FCIParkingView() {
     loading,
     refreshing,
     snapshotLoading,
+    sampleLoading,
+    autoRefresh,
+    setAutoRefresh,
     error,
     lastUpdated,
     refetch,
     fetchVideoSnapshot,
+    fetchVideoSamples,
   } = useParkingStatus('fci');
 
   const leftSlotIds = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'];
@@ -46,9 +51,13 @@ export default function FCIParkingView() {
       })
     : 'Not updated yet';
   const debugImageUrl = getParkingDebugImageUrl('fci');
-  const statusSourceLabel = data?.source
-    ? `Video frame ${data.source.frame_index}`
-    : 'Static image';
+  const statusSourceLabel =
+    data?.source?.type === 'video_snapshot'
+      ? `Video frame ${data.source.frame_index}`
+      : data?.source?.type === 'video_samples'
+        ? `Video samples (${data.source.sample_count} frames)`
+        : 'Static image';
+  const busy = loading || refreshing || snapshotLoading || sampleLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -71,7 +80,7 @@ export default function FCIParkingView() {
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Button
                 onClick={refetch}
-                disabled={loading || refreshing || snapshotLoading}
+                disabled={busy}
                 variant="outline"
               >
                 <RefreshCw
@@ -82,11 +91,20 @@ export default function FCIParkingView() {
 
               <Button
                 onClick={() => fetchVideoSnapshot(0)}
-                disabled={loading || refreshing || snapshotLoading}
+                disabled={busy}
                 variant="outline"
               >
                 <Film className="mr-2 h-4 w-4" />
                 {snapshotLoading ? 'Sampling...' : 'Video Snapshot'}
+              </Button>
+
+              <Button
+                onClick={() => fetchVideoSamples()}
+                disabled={busy}
+                variant="outline"
+              >
+                <Film className="mr-2 h-4 w-4" />
+                {sampleLoading ? 'Sampling...' : 'Video Samples'}
               </Button>
 
               <Button asChild variant="outline">
@@ -95,6 +113,15 @@ export default function FCIParkingView() {
                   Detection Debug
                 </a>
               </Button>
+
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <Switch
+                  checked={autoRefresh}
+                  onCheckedChange={setAutoRefresh}
+                  disabled={loading}
+                />
+                Auto refresh
+              </label>
 
               <span className="text-sm text-gray-600">
                 Last updated: {lastUpdatedLabel} | Source: {statusSourceLabel}

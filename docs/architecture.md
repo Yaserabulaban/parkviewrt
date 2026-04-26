@@ -123,8 +123,11 @@ The FCI and FAIE pages expose:
 
 ```text
 Refresh button
+Auto refresh switch
 Last updated timestamp
 Detection Debug link
+Video Snapshot button
+Video Samples button
 Available and occupied counts
 Slot layout visualization
 ```

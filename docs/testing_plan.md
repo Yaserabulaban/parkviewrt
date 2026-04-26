@@ -167,8 +167,11 @@ Expected:
 Page loads without console errors
 Available and occupied counts match backend
 Refresh button reloads backend status
+Auto refresh switch periodically reloads the current source
 Last updated timestamp changes after refresh
 Detection Debug opens the backend debug image in a new tab
+Video Snapshot button loads /api/status/{location_id}/video-snapshot
+Video Samples button loads /api/status/{location_id}/video-samples
 ```
 
 ## Build Verification

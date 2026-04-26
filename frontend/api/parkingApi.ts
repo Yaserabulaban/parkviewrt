@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../config/env";
-import type { ParkingStatusResponse } from "../types/parking";
+import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
 
 export async function getParkingStatus(
   locationId: "fci" | "faie"
@@ -18,11 +18,33 @@ export async function getParkingVideoSnapshotStatus(
   frameIndex = 0
 ): Promise<ParkingStatusResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/api/status/${locationId}/video-snapshot?frame_index=${frameIndex}+`
+    `${API_BASE_URL}/api/status/${locationId}/video-snapshot?frame_index=${frameIndex}`
   );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch video snapshot status for ${locationId}`);
+  }
+
+  return response.json();
+}
+
+export async function getParkingVideoSamplesStatus(
+  locationId: "fci" | "faie",
+  sampleCount = 5,
+  startFrame = 0,
+  frameStep = 30
+): Promise<VideoSamplesResponse> {
+  const params = new URLSearchParams({
+    sample_count: String(sampleCount),
+    start_frame: String(startFrame),
+    frame_step: String(frameStep),
+  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/status/${locationId}/video-samples?${params.toString()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch video sample status for ${locationId}`);
   }
 
   return response.json();

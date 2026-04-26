@@ -42,3 +42,6 @@ backend/app/data/videos/
 Thumbs.db
 .idea/
 .vscode/
+.pdf
+package-lock.json
+package.json

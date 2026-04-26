@@ -9,6 +9,15 @@ router = APIRouter(prefix="/api", tags=["parking-status"])
 occupancy_service = ParkingOccupancyService()
 
 
+@router.get("/health")
+def get_health_status():
+    return {
+        "status": "ok",
+        "model_loaded": hasattr(occupancy_service.detector, "model"),
+        "locations": ["fci", "faie"],
+    }
+
+
 @router.get("/status/{location_id}", response_model=ParkingStatusResponse)
 def get_parking_status(
     location_id: str,

@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-ultralytics
-shapely
-opencv-python
-pytest
-httpx

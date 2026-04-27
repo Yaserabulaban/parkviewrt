@@ -44,6 +44,7 @@ colab/.ipynb_checkpoints/
 Thumbs.db
 .idea/
 .vscode/
-.pdf
-package-lock.json
-package.json
+
+# Root-level npm files are not used; the active frontend package lives in frontend/
+/package-lock.json
+/package.json

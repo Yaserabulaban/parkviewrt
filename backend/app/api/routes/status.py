@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from app.schemas.parking import ParkingStatusResponse
 from app.settings import get_settings
 from app.services.occupancy import ParkingOccupancyService
+from app.services.slot_layouts import PARKING_SLOT_LAYOUTS
 from app.services.video_snapshot import VideoSnapshotService
 
 
@@ -27,6 +28,7 @@ def get_backend_config():
     return {
         "detection": settings.detection.as_dict(),
         "locations": ["fci", "faie"],
+        "slot_layouts": PARKING_SLOT_LAYOUTS,
     }
 
 

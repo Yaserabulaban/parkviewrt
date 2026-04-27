@@ -157,6 +157,30 @@ def test_config_endpoint_returns_detection_settings():
     assert config["detection"]["image_size"] == 1600
     assert config["detection"]["slot_overlap_threshold"] == 0.3
     assert config["detection"]["box_overlap_threshold"] == 0.2
+    assert config["slot_layouts"]["fci"]["monitored_slot_ids"] == [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "A8",
+    ]
+    assert config["slot_layouts"]["faie"]["monitored_slot_ids"] == [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6",
+        "B7",
+        "B8",
+    ]
+    assert config["slot_layouts"]["fci"]["display_slot_ids"][0] == "A1"
+    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A80"
+    assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
+    assert config["slot_layouts"]["faie"]["display_slot_ids"][-1] == "B40"
 
 
 def test_status_endpoint_returns_parking_counts(monkeypatch):

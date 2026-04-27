@@ -184,9 +184,9 @@ export default function FAIEParkingView() {
             <div className="relative mx-auto h-[580px] max-w-[1200px] overflow-hidden rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
               <div className="absolute inset-x-0 top-0 h-24 bg-[#86a66f]" />
 
-              <div className="absolute left-[70px] top-[220px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" /> // The two rows of parking area shapes
-              <div className="absolute left-[58px] top-[410px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" /> // The two rows of parking area shapes
-              <div className="absolute left-[900px] top-[220px] h-[278px] w-24 rounded-r-md bg-[#565d5b]" /> // The main parking area shapes
+              <div className="absolute left-[70px] top-[220px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
+              <div className="absolute left-[58px] top-[410px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
+              <div className="absolute left-[900px] top-[220px] h-[278px] w-24 rounded-r-md bg-[#565d5b]" />
               <div className="absolute left-[100px] top-[262px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
               <div className="absolute left-[100px] top-[452px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
               <div className="absolute left-[948px] top-[252px] h-[200px] border-l-2 border-dashed border-yellow-300/80" />

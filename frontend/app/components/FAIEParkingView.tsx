@@ -24,28 +24,46 @@ export default function FAIEParkingView() {
     fetchVideoSamples,
   } = useParkingStatus('faie');
 
-  const row1Ids = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'];
-  const row2Ids = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8'];
-  const row3Ids = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'];
+  const monitoredSlotIds = new Set(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']);
+  const uShapeSlots = [
+    'B1',
+    'B2',
+    'B3',
+    'B4',
+    'B5',
+    'B6',
+    'B7',
+    'B8',
+    'B9',
+    'B10',
+    'B11',
+    'B12',
+    'B13',
+    'B14',
+    'B15',
+    'B16',
+    'B17',
+    'B18',
+    'B19',
+    'B20',
+    'B21',
+    'B22',
+    'B23',
+    'B24',
+    'B25',
+    'B26',
+    'B27',
+    'B28',
+    'B29',
+    'B30',
+  ];
+  const baseSlots = uShapeSlots.slice(0, 25);
+  const rightSideSlots = uShapeSlots.slice(25);
+  const centerSlots = Array.from({ length: 10 }, (_, index) => `B${index + 31}`);
 
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
   );
-
-  const row1 = row1Ids.map((id) => ({
-    id,
-    isOccupied: slotsMap.get(id) ?? false,
-  }));
-
-  const row2 = row2Ids.map((id) => ({
-    id,
-    isOccupied: slotsMap.get(id) ?? false,
-  }));
-
-  const row3 = row3Ids.map((id) => ({
-    id,
-    isOccupied: slotsMap.get(id) ?? false,
-  }));
 
   const occupiedCount = data?.occupied_count ?? 0;
   const availableCount = data?.available_count ?? 0;
@@ -162,55 +180,72 @@ export default function FAIEParkingView() {
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            Parking Layout - Perpendicular Parking
-          </h2>
+          <div className="overflow-x-auto">
+            <div className="relative mx-auto h-[580px] max-w-[1200px] overflow-hidden rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
+              <div className="absolute inset-x-0 top-0 h-24 bg-[#86a66f]" />
 
-          <div className="space-y-8">
-            <div>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-sm font-semibold text-gray-600 w-16">Row B</span>
-                <div className="flex gap-6">
-                  {row1.map((spot) => (
-                    <ParkingSlot key={spot.id} id={spot.id} isOccupied={spot.isOccupied} />
-                  ))}
-                </div>
-              </div>
-              <div className="h-16 bg-gray-300 rounded-lg relative ml-20">
-                <div className="absolute inset-0 flex justify-around items-center">
-                  <div className="h-1 w-16 bg-yellow-400 rounded"></div>
-                  <div className="h-1 w-16 bg-yellow-400 rounded"></div>
-                  <div className="h-1 w-16 bg-yellow-400 rounded"></div>
-                </div>
-              </div>
-            </div>
+              <div className="absolute left-[70px] top-[220px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" /> // The two rows of parking area shapes
+              <div className="absolute left-[58px] top-[410px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" /> // The two rows of parking area shapes
+              <div className="absolute left-[900px] top-[220px] h-[278px] w-24 rounded-r-md bg-[#565d5b]" /> // The main parking area shapes
+              <div className="absolute left-[100px] top-[262px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
+              <div className="absolute left-[100px] top-[452px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
+              <div className="absolute left-[948px] top-[252px] h-[200px] border-l-2 border-dashed border-yellow-300/80" />
 
-            <div>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-sm font-semibold text-gray-600 w-16">Row D</span>
-                <div className="flex gap-6">
-                  {row2.map((spot) => (
-                    <ParkingSlot key={spot.id} id={spot.id} isOccupied={spot.isOccupied} />
-                  ))}
-                </div>
+              <div
+                className="absolute left-[42px] top-[126px] grid gap-1"
+                style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}
+              >
+                {baseSlots.map((id) => {
+                  const monitored = monitoredSlotIds.has(id);
+                  return (
+                    <ParkingSlot
+                      key={id}
+                      id={id}
+                      isOccupied={slotsMap.get(id) ?? false}
+                      monitored={monitored}
+                      size="map"
+                      className="h-14 w-8 text-[10px]"
+                    />
+                  );
+                })}
               </div>
-              <div className="h-16 bg-gray-300 rounded-lg relative ml-20">
-                <div className="absolute inset-0 flex justify-around items-center">
-                  <div className="h-1 w-16 bg-yellow-400 rounded"></div>
-                  <div className="h-1 w-16 bg-yellow-400 rounded"></div>
-                  <div className="h-1 w-16 bg-yellow-400 rounded"></div>
-                </div>
-              </div>
-            </div>
 
-            <div>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-sm font-semibold text-gray-600 w-16">Row E</span>
-                <div className="flex gap-6">
-                  {row3.map((spot) => (
-                    <ParkingSlot key={spot.id} id={spot.id} isOccupied={spot.isOccupied} />
-                  ))}
-                </div>
+              <div className="absolute left-[1100px] top-[200px] flex flex-col gap-3">
+                {rightSideSlots.map((id) => {
+                  const monitored = monitoredSlotIds.has(id);
+                  return (
+                    <ParkingSlot
+                      key={id}
+                      id={id}
+                      isOccupied={slotsMap.get(id) ?? false}
+                      monitored={monitored}
+                      size="map"
+                      className="h-14 w-8 -rotate-[20deg] text-[10px]"
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="absolute left-[250px] top-[330px] grid grid-cols-10 gap-3">
+                {centerSlots.map((id) => (
+                  <ParkingSlot
+                    key={id}
+                    id={id}
+                    isOccupied={false}
+                    monitored={false}
+                    size="map"
+                    className="h-14 w-8 text-[10px]"
+                  />
+                ))}
+              </div>
+
+              <div className="absolute right-6 top-6 flex items-center gap-3 rounded bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700">
+                <span className="inline-block h-3 w-3 rounded bg-red-500" />
+                Occupied
+                <span className="inline-block h-3 w-3 rounded bg-green-500" />
+                Available
+                <span className="inline-block h-3 w-3 rounded bg-slate-300" />
+                Not monitored
               </div>
             </div>
           </div>

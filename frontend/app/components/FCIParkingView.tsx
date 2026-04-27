@@ -24,22 +24,23 @@ export default function FCIParkingView() {
     fetchVideoSamples,
   } = useParkingStatus('fci');
 
-  const leftSlotIds = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'];
-  const rightSlotIds = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'];
+  const monitoredSlotIds = new Set(['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8']);
+  const rowGroups = [
+    {
+      label: 'Row A',
+      upperStart: 1,
+      lowerStart: 21,
+    },
+    {
+      label: 'Row A',
+      upperStart: 41,
+      lowerStart: 61,
+    },
+  ];
 
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
   );
-
-  const leftSide = leftSlotIds.map((id) => ({
-    id,
-    isOccupied: slotsMap.get(id) ?? false,
-  }));
-
-  const rightSide = rightSlotIds.map((id) => ({
-    id,
-    isOccupied: slotsMap.get(id) ?? false,
-  }));
 
   const occupiedCount = data?.occupied_count ?? 0;
   const availableCount = data?.available_count ?? 0;
@@ -157,49 +158,87 @@ export default function FCIParkingView() {
 
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            Parking Layout - Angled Parking
+            Parking Layout - FCI Row Plan
           </h2>
 
-          <div className="relative">
-            <div className="flex gap-12 justify-center">
-              <div className="flex flex-col gap-4">
-                <div className="text-center text-sm font-semibold text-gray-600 mb-2">
-                  Row A
+          <div className="overflow-x-auto">
+            <div className="mx-auto min-w-[1180px] rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
+              <div className="mb-5 flex items-center justify-end">
+                <div className="rounded bg-[#86a66f] px-4 py-2 text-xs font-semibold text-white">
+                  Faculty / Tree Line
                 </div>
-                {leftSide.map((spot) => (
-                  <div key={spot.id} className="transform -rotate-45 origin-right">
-                    <ParkingSlot id={spot.id} isOccupied={spot.isOccupied} />
+              </div>
+
+              <div className="space-y-8">
+                {rowGroups.map((row) => (
+                  <div key={row.label} className="rounded-md bg-[#656b69] p-4">
+                    <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-100">
+                      <span>{row.label}</span>
+                    </div>
+
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}
+                    >
+                      {Array.from({ length: 20 }, (_, index) => {
+                        const id = `A${row.upperStart + index}`;
+                        const monitored = monitoredSlotIds.has(id);
+                        return (
+                          <ParkingSlot
+                            key={id}
+                            id={id}
+                            isOccupied={slotsMap.get(id) ?? false}
+                            monitored={monitored}
+                            size="map"
+                            className="h-14 w-10"
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <div className="relative my-4 flex h-16 items-center justify-center rounded bg-[#4f5554]">
+                      <div className="w-full border-t-2 border-dashed border-yellow-300/80" />
+                      <span className="absolute rounded bg-[#4f5554] px-4 py-1 text-xs font-semibold text-slate-100">
+                        Main Drive Lane
+                      </span>
+                    </div>
+
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}
+                    >
+                      {Array.from({ length: 20 }, (_, index) => {
+                        const id = `A${row.lowerStart + index}`;
+                        const monitored = monitoredSlotIds.has(id);
+                        return (
+                          <ParkingSlot
+                            key={id}
+                            id={id}
+                            isOccupied={slotsMap.get(id) ?? false}
+                            monitored={monitored}
+                            size="map"
+                            className="h-14 w-10"
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="w-32 bg-gray-300 rounded-lg flex items-center justify-center relative">
-                <div className="absolute inset-0 flex flex-col justify-around py-4">
-                  <div className="w-1 h-12 bg-yellow-400 mx-auto rounded"></div>
-                  <div className="w-1 h-12 bg-yellow-400 mx-auto rounded"></div>
-                  <div className="w-1 h-12 bg-yellow-400 mx-auto rounded"></div>
-                  <div className="w-1 h-12 bg-yellow-400 mx-auto rounded"></div>
+              <div className="mt-6 flex items-center justify-between">
+                <div className="rounded bg-[#86a66f] px-4 py-2 text-xs font-semibold text-white">
+                  Entrance / Exit Road
                 </div>
-                <div className="transform -rotate-90 text-gray-600 font-semibold text-sm whitespace-nowrap">
-                  Main Drive
+                <div className="flex items-center gap-3 rounded bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700">
+                  <span className="inline-block h-3 w-3 rounded bg-red-500" />
+                  Occupied
+                  <span className="inline-block h-3 w-3 rounded bg-green-500" />
+                  Available
+                  <span className="inline-block h-3 w-3 rounded bg-slate-300" />
+                  Not monitored
                 </div>
               </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="text-center text-sm font-semibold text-gray-600 mb-2">
-                  Row F
-                </div>
-                {rightSide.map((spot) => (
-                  <div key={spot.id} className="transform rotate-45 origin-left">
-                    <ParkingSlot id={spot.id} isOccupied={spot.isOccupied} />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-8 flex justify-between text-sm font-semibold text-gray-600">
-              <div>Entrance</div>
-              <div>Exit</div>
             </div>
           </div>
         </div>

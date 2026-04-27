@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft, ExternalLink, Film, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Film, RefreshCw, Shuffle } from 'lucide-react';
 import { Switch } from './ui/switch';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
@@ -15,11 +15,14 @@ export default function FCIParkingView() {
     refreshing,
     snapshotLoading,
     sampleLoading,
+    demoLoading,
     autoRefresh,
     setAutoRefresh,
     error,
     lastUpdated,
+    statusMode,
     refetch,
+    fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,
   } = useParkingStatus('fci');
@@ -57,8 +60,10 @@ export default function FCIParkingView() {
       ? `Video frame ${data.source.frame_index}`
       : data?.source?.type === 'video_samples'
         ? `Video samples (${data.source.sample_count} frames)`
+        : statusMode === 'demo'
+          ? 'Demo random'
         : 'Static image';
-  const busy = loading || refreshing || snapshotLoading || sampleLoading;
+  const busy = loading || refreshing || snapshotLoading || sampleLoading || demoLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -97,6 +102,15 @@ export default function FCIParkingView() {
               >
                 <Film className="mr-2 h-4 w-4" />
                 {snapshotLoading ? 'Sampling...' : 'Video Snapshot'}
+              </Button>
+
+              <Button
+                onClick={fetchDemoStatus}
+                disabled={busy}
+                variant="outline"
+              >
+                <Shuffle className="mr-2 h-4 w-4" />
+                {demoLoading ? 'Shuffling...' : 'Demo Random'}
               </Button>
 
               <Button
@@ -182,7 +196,7 @@ export default function FCIParkingView() {
                     >
                       {Array.from({ length: 20 }, (_, index) => {
                         const id = `A${row.upperStart + index}`;
-                        const monitored = monitoredSlotIds.has(id);
+                        const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
                         return (
                           <ParkingSlot
                             key={id}
@@ -209,7 +223,7 @@ export default function FCIParkingView() {
                     >
                       {Array.from({ length: 20 }, (_, index) => {
                         const id = `A${row.lowerStart + index}`;
-                        const monitored = monitoredSlotIds.has(id);
+                        const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
                         return (
                           <ParkingSlot
                             key={id}

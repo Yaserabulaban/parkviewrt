@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  getParkingDemoStatus,
   getParkingStatus,
   getParkingVideoSamplesStatus,
   getParkingVideoSnapshotStatus,
 } from "../api/parkingApi";
 import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
 
-type StatusMode = "static" | "video_snapshot" | "video_samples";
+type StatusMode = "static" | "demo" | "video_snapshot" | "video_samples";
 
 export function useParkingStatus(locationId: "fci" | "faie") {
   const [data, setData] = useState<ParkingStatusResponse | null>(null);
@@ -14,6 +15,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
   const [refreshing, setRefreshing] = useState(false);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [sampleLoading, setSampleLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [statusMode, setStatusMode] = useState<StatusMode>("static");
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,23 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     }
   }, [locationId]);
 
+  const fetchDemoStatus = useCallback(async () => {
+    try {
+      setDemoLoading(true);
+      setError(null);
+      const result = await getParkingDemoStatus(locationId);
+      setData(result);
+      setStatusMode("demo");
+      setLastUpdated(new Date());
+      hasLoaded.current = true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+      setDemoLoading(false);
+    }
+  }, [locationId]);
+
   const fetchVideoSamples = useCallback(
     async (sampleCount = 5, startFrame = 0, frameStep = 30) => {
       try {
@@ -97,13 +116,15 @@ export function useParkingStatus(locationId: "fci" | "faie") {
         fetchVideoSamples();
       } else if (statusMode === "video_snapshot") {
         fetchVideoSnapshot(0);
+      } else if (statusMode === "demo") {
+        fetchDemoStatus();
       } else {
         fetchStatus();
       }
     }, 15000);
 
     return () => window.clearInterval(intervalId);
-  }, [autoRefresh, fetchStatus, fetchVideoSamples, fetchVideoSnapshot, statusMode]);
+  }, [autoRefresh, fetchDemoStatus, fetchStatus, fetchVideoSamples, fetchVideoSnapshot, statusMode]);
 
   return {
     data,
@@ -111,11 +132,14 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     refreshing,
     snapshotLoading,
     sampleLoading,
+    demoLoading,
     autoRefresh,
     setAutoRefresh,
     error,
     lastUpdated,
+    statusMode,
     refetch: fetchStatus,
+    fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,
   };

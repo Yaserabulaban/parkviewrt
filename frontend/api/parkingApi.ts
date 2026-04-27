@@ -13,6 +13,18 @@ export async function getParkingStatus(
   return response.json();
 }
 
+export async function getParkingDemoStatus(
+  locationId: "fci" | "faie"
+): Promise<ParkingStatusResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/status/${locationId}/demo`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch demo parking status for ${locationId}`);
+  }
+
+  return response.json();
+}
+
 export async function getParkingVideoSnapshotStatus(
   locationId: "fci" | "faie",
   frameIndex = 0

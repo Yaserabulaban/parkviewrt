@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft, ExternalLink, Film, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Film, RefreshCw, Shuffle } from 'lucide-react';
 import { Switch } from './ui/switch';
 import ParkingSlot from '../components/ParkingSlot';
 import logoImage from '@/assets/mmu-logo.png';
@@ -15,11 +15,14 @@ export default function FAIEParkingView() {
     refreshing,
     snapshotLoading,
     sampleLoading,
+    demoLoading,
     autoRefresh,
     setAutoRefresh,
     error,
     lastUpdated,
+    statusMode,
     refetch,
+    fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,
   } = useParkingStatus('faie');
@@ -80,8 +83,10 @@ export default function FAIEParkingView() {
       ? `Video frame ${data.source.frame_index}`
       : data?.source?.type === 'video_samples'
         ? `Video samples (${data.source.sample_count} frames)`
+        : statusMode === 'demo'
+          ? 'Demo random'
         : 'Static image';
-  const busy = loading || refreshing || snapshotLoading || sampleLoading;
+  const busy = loading || refreshing || snapshotLoading || sampleLoading || demoLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -120,6 +125,15 @@ export default function FAIEParkingView() {
               >
                 <Film className="mr-2 h-4 w-4" />
                 {snapshotLoading ? 'Sampling...' : 'Video Snapshot'}
+              </Button>
+
+              <Button
+                onClick={fetchDemoStatus}
+                disabled={busy}
+                variant="outline"
+              >
+                <Shuffle className="mr-2 h-4 w-4" />
+                {demoLoading ? 'Shuffling...' : 'Demo Random'}
               </Button>
 
               <Button
@@ -196,7 +210,7 @@ export default function FAIEParkingView() {
                 style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}
               >
                 {baseSlots.map((id) => {
-                  const monitored = monitoredSlotIds.has(id);
+                  const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
                   return (
                     <ParkingSlot
                       key={id}
@@ -212,7 +226,7 @@ export default function FAIEParkingView() {
 
               <div className="absolute left-[1100px] top-[200px] flex flex-col gap-3">
                 {rightSideSlots.map((id) => {
-                  const monitored = monitoredSlotIds.has(id);
+                  const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
                   return (
                     <ParkingSlot
                       key={id}
@@ -231,8 +245,8 @@ export default function FAIEParkingView() {
                   <ParkingSlot
                     key={id}
                     id={id}
-                    isOccupied={false}
-                    monitored={false}
+                    isOccupied={slotsMap.get(id) ?? false}
+                    monitored={slotsMap.has(id)}
                     size="map"
                     className="h-14 w-8 text-[10px]"
                   />

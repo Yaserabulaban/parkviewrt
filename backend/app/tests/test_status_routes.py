@@ -231,6 +231,35 @@ def test_status_endpoint_rejects_unknown_location(monkeypatch):
     assert response.json() == {"detail": "Unknown location: unknown"}
 
 
+def test_demo_status_endpoint_returns_all_display_slots():
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/faie/demo",
+        params={"occupancy_rate": 0.5, "seed": 7},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_id"] == "faie"
+    assert data["total_slots"] == 40
+    assert data["available_count"] + data["occupied_count"] == 40
+    assert data["slots"][0]["slot_id"] == "B1"
+    assert data["slots"][-1]["slot_id"] == "B40"
+
+
+def test_demo_status_endpoint_rejects_invalid_occupancy_rate():
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/fci/demo",
+        params={"occupancy_rate": 1.5},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "occupancy_rate must be between 0 and 1"}
+
+
 def test_debug_endpoint_returns_jpeg(monkeypatch):
     monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
     client = TestClient(app)

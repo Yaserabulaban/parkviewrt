@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from app.schemas.parking import ParkingStatusResponse
 from app.settings import get_settings
 from app.services.occupancy import ParkingOccupancyService
-from app.services.slot_layouts import PARKING_SLOT_LAYOUTS
+from app.services.slot_layouts import PARKING_SLOT_LAYOUTS, build_demo_parking_status
 from app.services.video_snapshot import VideoSnapshotService
 
 
@@ -52,6 +52,22 @@ def get_parking_status(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/status/{location_id}/demo", response_model=ParkingStatusResponse)
+def get_demo_parking_status(
+    location_id: str,
+    occupancy_rate: float = 0.5,
+    seed: int | None = None,
+):
+    try:
+        return build_demo_parking_status(
+            location_id,
+            occupancy_rate=occupancy_rate,
+            seed=seed,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/status/{location_id}/video-snapshot")

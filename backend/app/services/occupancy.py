@@ -186,7 +186,7 @@ class ParkingOccupancyService:
         slot_data = self._load_slots(normalized_location_id)
         image_path = self._get_image_path(normalized_location_id) if image_source is None else None
         resolved_image_source = image_path if image_source is None else image_source
-        detections = self.detector.detect_cars(
+        detections = self.detector.detect_vehicles(
             resolved_image_source,
             confidence_threshold=resolved_confidence_threshold,
             image_size=resolved_image_size,
@@ -350,11 +350,12 @@ class ParkingOccupancyService:
         for detection in detections:
             x1, y1, x2, y2 = [int(value) for value in detection["bbox"]]
             confidence = detection["confidence"]
+            class_name = detection.get("class_name", "vehicle")
 
             cv2.rectangle(image, (x1, y1), (x2, y2), (255, 180, 0), 3)
             cv2.putText(
                 image,
-                f"car {confidence:.2f}",
+                f"{class_name} {confidence:.2f}",
                 (x1, max(y1 - 8, 20)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.65,
@@ -370,7 +371,7 @@ class ParkingOccupancyService:
         summary = (
             f"{analysis['location_id'].upper()} | "
             f"slots: {total_slots} | occupied: {occupied_count} | "
-            f"available: {available_count} | cars detected: {detection_count} | "
+            f"available: {available_count} | vehicles detected: {detection_count} | "
             f"S>={analysis['overlap_threshold']:.2f} "
             f"B>={analysis['box_overlap_threshold']:.2f} "
             f"C>={analysis['confidence_threshold']:.2f} "

@@ -6,7 +6,7 @@ import {
 } from "../api/parkingApi";
 import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
 
-type StatusMode = "static" | "demo" | "video_snapshot" | "video_samples";
+type StatusMode = "demo" | "video_snapshot" | "video_samples";
 const DEFAULT_VIDEO_FRAME_INDEX = 0;
 const MIN_SYNC_FRAME_DISTANCE = 15;
 

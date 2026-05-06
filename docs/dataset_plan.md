@@ -1,65 +1,83 @@
 # ParkViewRT Dataset Plan
 
-This document describes the current data setup and the plan for using real FCI and FAIE parking videos when they become available.
+This document describes the current data setup and the plan for maintaining FCI and FAIE parking footage.
 
 ## Current Data
 
-Static parking images:
+Tracked reference images:
 
 ```text
 backend/app/data/images/fci.jpeg
 backend/app/data/images/faie.jpeg
 ```
 
-Slot polygon files:
+Tracked slot polygon files:
 
 ```text
 backend/app/data/slots/fci_slots.json
 backend/app/data/slots/faie_slots.json
 ```
 
-Slot file format:
+Ignored local videos:
+
+```text
+backend/app/data/videos/fci/
+backend/app/data/videos/faie/
+```
+
+Ignored generated outputs:
+
+```text
+backend/app/data/outputs/
+colab/outputs/
+frontend/dist/
+```
+
+## Slot File Format
 
 ```json
 {
   "location_id": "fci",
+  "layout_type": "video_day_frame",
   "slots": [
     {
       "slot_id": "A1",
+      "row": "A",
+      "shape": "polygon",
       "points": [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
     }
   ]
 }
 ```
 
-Current status:
+## Current Slot Coverage
 
 ```text
-FCI slot polygons are prepared and validated.
-FAIE slot polygons are prepared and validated.
-Static images are used as a temporary replacement for real video frames.
-Pretrained YOLO is used without custom training.
+FCI: A1-A80 except A77, 79 monitored slots
+FAIE: B1-B40, 40 monitored slots
 ```
+
+The FCI polygons were regenerated against a stable day-video frame after removing footage where the tripod angle shifted. If the final FCI video is retaken from a different angle, regenerate `fci_slots.json` again.
+
+FAIE polygons currently cover the full displayed `B1-B40` layout.
 
 ## Current Model Approach
 
-The project currently uses:
-
 ```text
 YOLO pretrained model: yolo11n.pt
-Detection class: car only
-No custom dataset training yet
+Detection classes: car, truck
+Custom training: not used yet
 ```
 
-The model weights are stored locally but ignored by Git:
+The backend model weights are expected locally under:
 
 ```text
 backend/app/models/yolo11n.pt
 ```
 
-If missing, Ultralytics can download the weights when network access is available.
+Model weights are ignored by Git. If missing, Ultralytics may download them when network access is available.
 
-The active model and detection defaults are configured through environment variables:
+Detection defaults:
 
 ```text
 PARKVIEWRT_MODEL_PATH=backend/app/models/yolo11n.pt
@@ -69,137 +87,97 @@ PARKVIEWRT_SLOT_THRESHOLD=0.30
 PARKVIEWRT_BOX_THRESHOLD=0.20
 ```
 
-These defaults are documented in `.env.example`.
+## Video Collection Requirements
 
-## Real Video Requirements
-
-When real parking videos are obtained, the preferred requirements are:
+Use separate videos for:
 
 ```text
-Separate videos for FCI and FAIE
-Camera angle should be fixed
-Camera should cover the same slots as the polygon JSON
-Video should include normal daytime parking conditions
-Video should include both occupied and available slot examples
-Resolution should be high enough for small parked cars to remain visible
+FCI parking
+FAIE parking
 ```
 
-Recommended collection conditions:
+Recommended capture conditions:
 
 ```text
-morning
-afternoon
-different occupancy levels
-clear weather
-partial occlusion cases if available
+fixed tripod or stable mounting
+no camera movement after labeling starts
+daytime lighting
+high enough resolution for distant vehicles
+examples of both occupied and available slots
+minimal tree or pole obstruction where possible
 ```
 
-Avoid changing camera position after slot polygons are created. If the camera moves, the slot polygons must be recreated.
+Avoid zooming, panning, or moving the tripod after slot polygons are created. A small angle change can make the polygons inaccurate.
 
-## Planned Video Processing Flow
+## Video Processing Flow
 
-The first video flow is now a snapshot pipeline:
+Current dashboard flow:
 
 ```text
-load video
-select one frame by frame_index
-run YOLO on sampled frame
-compare detections with slot polygons
-return occupancy status
+local video -> current playback time -> frame_index -> YOLO -> slot polygons -> dashboard status
 ```
 
-The current endpoint is:
+Current backend endpoints:
 
 ```text
+GET /api/video/{location_id}/metadata
+GET /api/video/{location_id}
 GET /api/status/{location_id}/video-snapshot
-```
-
-Videos should be placed in:
-
-```text
-backend/app/data/videos/{location_id}/
-```
-
-The current implementation reuses shared logic for:
-
-```text
-static image status
-single video frame status
-single video snapshot status
-```
-
-Future real-time behavior should extend this by sampling frames periodically:
-
-```text
-load video or stream
-sample one frame every N frames or every N seconds
-run existing frame occupancy logic
-publish latest occupancy status
-```
-
-The current backend also supports a multi-frame test endpoint:
-
-```text
 GET /api/status/{location_id}/video-samples
+GET /api/debug/{location_id}?source=video
 ```
 
-This endpoint samples a fixed number of frames from a local video and calculates an aggregated occupancy summary using majority voting across sampled frames.
+The frame status cache is generated under:
+
+```text
+backend/app/data/outputs/video_status_cache/
+```
+
+Clear the relevant cache folder after replacing a video with the same filename.
 
 ## Future Dataset Expansion
 
-If pretrained YOLO is not accurate enough for the final demo, the next dataset step is to prepare a custom detection dataset.
+If pretrained YOLO is not accurate enough for final evaluation, prepare a custom detection dataset from sampled video frames.
 
-Potential custom dataset labels:
+Potential labels:
 
 ```text
 car
+truck
 ```
 
-Possible annotation format:
+Recommended frames:
 
 ```text
-YOLO bounding-box format
+FCI and FAIE daytime videos
+different occupancy levels
+small distant vehicles
+partial tree cover or shadows
+empty slots for negative examples
 ```
 
-Suggested training data:
-
-```text
-frames sampled from FCI videos
-frames sampled from FAIE videos
-different lighting and occupancy conditions
-cars partially covered by trees or shadows
-small far-away vehicles
-```
-
-Training is not part of the current phase. It should only be considered after testing real videos with the pretrained model.
+Training is not part of the current phase. It should only be considered after the final stable videos are tested with the pretrained model.
 
 ## Data Storage Policy
 
 Git should track:
 
 ```text
-slot JSON files
-small representative static images if needed
-documentation
 source code
+slot JSON files
+small reference images
+documentation
+tests
 ```
 
 Git should ignore:
 
 ```text
 large videos
-generated output images
+generated debug images
+frame status cache
 model weights
 virtual environments
 build folders
-```
-
-The current `.gitignore` excludes:
-
-```text
-backend/app/data/videos/
-backend/app/data/outputs/
-*.pt
-*.pth
-*.onnx
+logs
 ```

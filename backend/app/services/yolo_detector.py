@@ -51,8 +51,17 @@ class YoloDetector:
 
         return detections
 
-    def detect_vehicles(self, frame: Any) -> list[dict]:
-        return self.detect_cars(frame)
+    def detect_vehicles(
+        self,
+        frame: Any,
+        confidence_threshold: float = 0.25,
+        image_size: int = 640,
+    ) -> list[dict]:
+        return self.detect_cars(
+            frame,
+            confidence_threshold=confidence_threshold,
+            image_size=image_size,
+        )
 
 
 @lru_cache(maxsize=1)

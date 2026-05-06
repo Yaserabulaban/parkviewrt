@@ -5,18 +5,6 @@ import type {
   VideoSamplesResponse,
 } from "../types/parking";
 
-export async function getParkingStatus(
-  locationId: "fci" | "faie"
-): Promise<ParkingStatusResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/status/${locationId}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch parking status for ${locationId}`);
-  }
-
-  return response.json();
-}
-
 export async function getParkingDemoStatus(
   locationId: "fci" | "faie"
 ): Promise<ParkingStatusResponse> {

@@ -85,6 +85,8 @@ Reason:
 It gives correct occupancy on the labelled static slots and the debug output is visually reliable for the current MMU images.
 ```
 
-This decision can be revisited after real FCI and FAIE parking videos are collected.
+This decision should be revisited after the final stable FCI and FAIE parking videos are collected and representative frames are labeled.
 
 Custom training notebooks were removed for now because the current FYP2 phase uses pretrained YOLO only. Add a training notebook later when real video frames have been collected and annotated.
+
+The notebook may download YOLO weights into the `colab/` folder while running. Those `.pt` files are local generated artifacts and are ignored by Git.

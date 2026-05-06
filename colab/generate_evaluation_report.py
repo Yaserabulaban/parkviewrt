@@ -154,21 +154,23 @@ def build_report(
 
     return f"""# ParkViewRT Model Evaluation
 
-This document summarizes the pretrained YOLO model comparison for the current FCI and FAIE static parking images.
+This document summarizes the pretrained YOLO model comparison that was run earlier on the original FCI and FAIE static parking images.
+
+The current application flow has moved to video-frame occupancy. Keep this report as the baseline pretrained-model comparison, then rerun evaluation after the final stable FCI and FAIE videos are captured and labeled.
 
 ## Evaluation Setup
 
 ```text
 Input images: backend/app/data/images/fci.jpeg, backend/app/data/images/faie.jpeg
 Slot labels: backend/app/data/slots/fci_slots.json, backend/app/data/slots/faie_slots.json
-Detection class: car only
+Detection classes in current backend: car, truck
 Confidence threshold: 0.20
 Image size: 1600
 Slot overlap threshold: 0.30
 Box overlap threshold: 0.20
 ```
 
-The current labelled static images contain the eight selected slots for each location, and those selected slots are treated as occupied for this comparison.
+The original labelled static-image comparison used eight selected slots for each location, and those selected slots were treated as occupied for the comparison. The current runtime slot files are broader: FCI monitors 79 slots and FAIE monitors 40 slots.
 
 ## Selected Model
 
@@ -176,11 +178,11 @@ The current labelled static images contain the eight selected slots for each loc
 {selected_model}
 ```
 
-`{selected_model}` remains the production backend model for now. The comparison confirms that it correctly marks all labelled static slots as occupied, and the debug images were visually reliable for the current MMU parking images.
+`{selected_model}` remains the production backend model for now. The baseline comparison confirmed that it correctly marked all labelled static slots as occupied, and the debug images were visually reliable for the original MMU parking images.
 
 All compared models reached full slot accuracy on this small static-image set. Because the current test set is limited, the production choice also considers visual debug quality, existing backend compatibility, and the need to retest once real videos are available.
 
-This decision should be revisited after real FCI and FAIE videos are collected, because video frames may include motion blur, lighting changes, different occupancy levels, and more occlusion.
+This decision should be revisited after the final stable FCI and FAIE videos are collected, because video frames may include motion blur, lighting changes, different occupancy levels, and more occlusion.
 
 ## Model Summary
 

@@ -1,12 +1,12 @@
 # ParkViewRT API Contract
 
-Base URL during local development:
+The frontend currently points to:
 
 ```text
-http://127.0.0.1:8000
+http://127.0.0.1:8001
 ```
 
-The active backend implementation is under `backend/app`.
+If the backend runs on another port, update `frontend/config/env.ts`.
 
 ## Health Check
 
@@ -14,7 +14,7 @@ The active backend implementation is under `backend/app`.
 GET /api/health
 ```
 
-Purpose: confirm that the FastAPI backend is running and that the YOLO detector object is available.
+Purpose: confirm that the backend is running and the detector object exists.
 
 Example response:
 
@@ -32,7 +32,7 @@ Example response:
 GET /api/config
 ```
 
-Purpose: show the active backend model and default detection thresholds.
+Purpose: expose active detection settings and slot layout metadata.
 
 Example response:
 
@@ -45,34 +45,30 @@ Example response:
     "slot_overlap_threshold": 0.3,
     "box_overlap_threshold": 0.2
   },
-  "locations": ["fci", "faie"]
+  "locations": ["fci", "faie"],
+  "slot_layouts": {
+    "fci": {
+      "display_slot_ids": ["A1", "A2"],
+      "monitored_slot_ids": ["A1", "A2"]
+    }
+  }
 }
 ```
 
-The defaults can be changed with environment variables:
-
-```text
-PARKVIEWRT_MODEL_PATH
-PARKVIEWRT_CONFIDENCE
-PARKVIEWRT_IMAGE_SIZE
-PARKVIEWRT_SLOT_THRESHOLD
-PARKVIEWRT_BOX_THRESHOLD
-```
-
-## Parking Status
+## Static Parking Status
 
 ```text
 GET /api/status/{location_id}
 ```
 
-Supported `location_id` values:
+Supported locations:
 
 ```text
 fci
 faie
 ```
 
-Purpose: run pretrained YOLO on the current static image for the selected location, compare detected car boxes with slot polygons, and return occupancy counts.
+Purpose: run YOLO on the static reference image and compare detections with slot polygons. This endpoint is retained for backend testing and comparison. The dashboard uses video snapshots by default.
 
 Optional query parameters:
 
@@ -83,97 +79,72 @@ confidence     YOLO confidence threshold. Default: 0.20
 image_size     YOLO inference image size. Default: 1600
 ```
 
+Example response:
+
+```json
+{
+  "location_id": "fci",
+  "total_slots": 79,
+  "occupied_count": 65,
+  "available_count": 14,
+  "slots": [
+    { "slot_id": "A1", "occupied": true },
+    { "slot_id": "A2", "occupied": false }
+  ]
+}
+```
+
+## Demo Random Status
+
+```text
+GET /api/status/{location_id}/demo
+```
+
+Purpose: generate repeatable or random dashboard data without running YOLO.
+
+Optional query parameters:
+
+```text
+occupancy_rate  Occupied probability per slot. Default: 0.5
+seed            Optional integer for repeatable output
+```
+
 Example:
 
 ```text
-GET /api/status/fci?threshold=0.30&confidence=0.20&image_size=1600
+GET /api/status/fci/demo?occupancy_rate=0.6&seed=7
 ```
+
+## Video Metadata
+
+```text
+GET /api/video/{location_id}/metadata
+```
+
+Purpose: return the selected local video details used by the frontend for playback sync and cache busting.
 
 Example response:
 
 ```json
 {
   "location_id": "fci",
-  "total_slots": 8,
-  "occupied_count": 8,
-  "available_count": 0,
-  "slots": [
-    { "slot_id": "A1", "occupied": true },
-    { "slot_id": "A2", "occupied": true }
-  ]
+  "video_path": "backend/app/data/videos/fci/fci_video.mov",
+  "file_name": "fci_video.mov",
+  "file_size": 668794432,
+  "last_modified": 1778094931.0,
+  "frame_count": 19522,
+  "fps": 29.97,
+  "duration_seconds": 651.38
 }
 ```
 
-Error cases:
-
-```json
-{
-  "detail": "Unknown location: example"
-}
-```
-
-```json
-{
-  "detail": "Parking image not found for location: fci"
-}
-```
-
-## Debug Visualization
+## Video File
 
 ```text
-GET /api/debug/{location_id}
+GET /api/video/{location_id}
 ```
 
-Purpose: generate and return a JPEG image showing YOLO detections and slot occupancy decisions.
-
-Optional query parameters are the same as `/api/status/{location_id}`:
-
-```text
-threshold
-box_threshold
-confidence
-image_size
-```
-
-Example:
-
-```text
-GET /api/debug/faie?confidence=0.20&image_size=1600
-```
-
-Output: `image/jpeg`
-
-Debug image meaning:
-
-```text
-Blue boxes: YOLO car detections
-Red slot polygons: occupied slots
-Green slot polygons: available slots
-Sxx% label: slot-overlap percentage
-Top summary bar: location, slot counts, detection count, and active thresholds
-```
-
-Generated debug files are saved locally under:
-
-```text
-backend/app/data/outputs/
-```
-
-This folder is ignored by Git.
-
-## Video Snapshot Status
-
-```text
-GET /api/status/{location_id}/video-snapshot
-```
-
-Purpose: read one frame from the first available video for the selected location, run the same YOLO and slot-overlap logic used by static images, and return a parking status response.
-
-The backend looks for videos in:
-
-```text
-backend/app/data/videos/{location_id}/
-```
+Purpose: serve the selected local video to the dashboard. The response uses no-cache headers so replacing a video with the same filename is reflected in the browser.
 
 Supported video extensions:
 
@@ -184,63 +155,21 @@ Supported video extensions:
 .mkv
 ```
 
+## Video Snapshot Status
+
+```text
+GET /api/status/{location_id}/video-snapshot
+```
+
+Purpose: read one frame from the selected local video, run YOLO and slot overlap logic, return a normal parking status response, and optionally save or reuse a cached frame result.
+
 Optional query parameters:
 
 ```text
 frame_index     Frame number to sample. Default: 0
-threshold       Slot polygon overlap threshold. Default: 0.30
-box_threshold   Detection-box overlap threshold. Default: 0.20
-confidence      YOLO confidence threshold. Default: 0.20
-image_size      YOLO inference image size. Default: 1600
-```
-
-Example:
-
-```text
-GET /api/status/fci/video-snapshot?frame_index=10
-```
-
-Example response:
-
-```json
-{
-  "location_id": "fci",
-  "total_slots": 8,
-  "occupied_count": 8,
-  "available_count": 0,
-  "slots": [
-    { "slot_id": "A1", "occupied": true }
-  ],
-  "source": {
-    "type": "video_snapshot",
-    "video_path": "backend/app/data/videos/fci/dummy_fci.mp4",
-    "frame_index": 10
-  }
-}
-```
-
-If no video exists:
-
-```json
-{
-  "detail": "No video found for location: fci"
-}
-```
-
-## Video Sampled Status
-
-```text
-GET /api/status/{location_id}/video-samples
-```
-
-Purpose: sample multiple frames from the first available video for the selected location, process each frame with the same YOLO and slot-overlap logic, and return both per-frame results and an aggregated slot summary.
-
-Optional query parameters:
-
-```text
-sample_count    Number of frames to sample. Default: 5. Range: 1-20
-start_frame     First frame to sample. Default: 0
-frame_step      Number of frames between samples. Default: 30
+debug           Include a generated debug image path. Default: false
+use_cache       Reuse a saved result when available. Default: true
+save_result     Save the frame result under data/outputs. Default: true
 threshold       Slot polygon overlap threshold. Default: configured backend value
 box_threshold   Detection-box overlap threshold. Default: configured backend value
 confidence      YOLO confidence threshold. Default: configured backend value
@@ -250,7 +179,7 @@ image_size      YOLO inference image size. Default: configured backend value
 Example:
 
 ```text
-GET /api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
+GET /api/status/fci/video-snapshot?frame_index=300&use_cache=false
 ```
 
 Example response:
@@ -258,44 +187,87 @@ Example response:
 ```json
 {
   "location_id": "fci",
+  "total_slots": 79,
+  "occupied_count": 65,
+  "available_count": 14,
+  "slots": [
+    { "slot_id": "A1", "occupied": true }
+  ],
   "source": {
-    "type": "video_samples",
-    "video_path": "backend/app/data/videos/fci/example.mp4",
-    "frame_count": 300,
-    "fps": 30.0,
-    "sample_count": 5,
-    "start_frame": 0,
-    "frame_step": 30,
-    "frame_indices": [0, 30, 60, 90, 120]
-  },
-  "summary": {
-    "total_slots": 8,
-    "occupied_count": 8,
-    "available_count": 0,
-    "sample_count": 5,
-    "latest_frame_index": 120,
-    "slots": [
-      {
-        "slot_id": "A1",
-        "occupied_frames": 5,
-        "sample_count": 5,
-        "occupancy_ratio": 1.0,
-        "occupied": true
-      }
-    ]
-  },
-  "samples": [
-    {
-      "frame_index": 0,
-      "total_slots": 8,
-      "occupied_count": 8,
-      "available_count": 0,
-      "slots": [
-        { "slot_id": "A1", "occupied": true }
-      ]
-    }
-  ]
+    "type": "video_snapshot",
+    "video_path": "backend/app/data/videos/fci/fci_video.mov",
+    "frame_index": 300,
+    "cached": false
+  }
 }
 ```
 
-The aggregated `summary.slots[].occupied` value is based on majority voting across sampled frames. A slot is considered occupied when it is occupied in at least half of the sampled frames.
+## Video Sampled Status
+
+```text
+GET /api/status/{location_id}/video-samples
+```
+
+Purpose: sample multiple frames and return both per-frame results and a majority-vote summary.
+
+Optional query parameters:
+
+```text
+sample_count    Number of frames to sample. Default: 5. Range: 1-20
+start_frame     First frame to sample. Default: 0
+frame_step      Number of frames between samples. Default: 30
+threshold       Slot polygon overlap threshold
+box_threshold   Detection-box overlap threshold
+confidence      YOLO confidence threshold
+image_size      YOLO inference image size
+```
+
+Example:
+
+```text
+GET /api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
+```
+
+## Debug Visualization
+
+```text
+GET /api/debug/{location_id}
+```
+
+Default purpose: generate a JPEG overlay for a video frame.
+
+Optional query parameters:
+
+```text
+source          video or static. Default: video
+frame_index     Used when source=video. Default: 0
+threshold
+box_threshold
+confidence
+image_size
+```
+
+Examples:
+
+```text
+GET /api/debug/fci?source=video&frame_index=300
+GET /api/debug/faie?source=static
+```
+
+Debug image meaning:
+
+```text
+Blue boxes: YOLO vehicle detections
+Red slot polygons: occupied slots
+Green slot polygons: available slots
+Sxx% label: slot-overlap percentage
+Summary bar: location, slot counts, vehicle count, and active thresholds
+```
+
+Generated debug files are saved under:
+
+```text
+backend/app/data/outputs/
+```
+
+This folder is ignored by Git.

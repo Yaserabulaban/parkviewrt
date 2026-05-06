@@ -1,149 +1,136 @@
 # ParkViewRT Testing Plan
 
-This document describes the current manual and planned automated testing approach for the ParkViewRT FYP2 implementation.
+This document describes the current manual and automated testing flow for the video-based ParkViewRT dashboard.
+
+## Backend Setup
+
+Install dependencies:
+
+```powershell
+py -3.11 -m pip install -r backend/requirements.txt
+```
+
+Start backend on the port used by the frontend:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+```
+
+If port `8001` is unavailable, run on another port and update `frontend/config/env.ts`.
+
+## Video Placement
+
+Place local videos under:
+
+```text
+backend/app/data/videos/fci/
+backend/app/data/videos/faie/
+```
+
+Recommended filenames:
+
+```text
+fci_video.mov
+faie_video.mov
+```
+
+The backend selects the first supported video file in each location folder. Supported extensions are `.mp4`, `.avi`, `.mov`, and `.mkv`.
+
+After replacing a video with the same filename, clear generated frame status cache if needed:
+
+```powershell
+Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/fci/fci_video
+Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/faie/faie_video
+```
+
+The dashboard video itself uses cache-busting metadata, so the browser should load the new file after a refresh.
 
 ## Backend Manual Tests
 
-Start backend:
-
-```powershell
-cd backend
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-### Health Endpoint
-
-Open:
+Health:
 
 ```text
-http://127.0.0.1:8000/api/health
+http://127.0.0.1:8001/api/health
 ```
 
-Expected:
-
-```json
-{
-  "status": "ok",
-  "model_loaded": true,
-  "locations": ["fci", "faie"]
-}
-```
-
-### FCI Status
-
-Open:
+Config:
 
 ```text
-http://127.0.0.1:8000/api/status/fci
+http://127.0.0.1:8001/api/config
 ```
 
-Expected current static-image result:
+Expected slot metadata:
 
 ```text
-total_slots: 8
-occupied_count: 8
-available_count: 0
+FCI monitored slots: 79
+FAIE monitored slots: 40
+FCI excludes A77
 ```
 
-### FAIE Status
-
-Open:
+Video metadata:
 
 ```text
-http://127.0.0.1:8000/api/status/faie
-```
-
-Expected current static-image result:
-
-```text
-total_slots: 8
-occupied_count: 8
-available_count: 0
-```
-
-### Debug Images
-
-Open:
-
-```text
-http://127.0.0.1:8000/api/debug/fci
-http://127.0.0.1:8000/api/debug/faie
+http://127.0.0.1:8001/api/video/fci/metadata
+http://127.0.0.1:8001/api/video/faie/metadata
 ```
 
 Expected:
 
 ```text
-JPEG image loads in browser
-YOLO car detections are drawn in blue
-Slot polygons are drawn red or green
-Summary bar shows counts and thresholds
-Current FCI and FAIE target slots show occupied
+file_name matches the intended video
+frame_count > 0
+fps > 0
+file_size and last_modified are present
 ```
 
-### Video Snapshot
-
-Place a video under:
+Video snapshot:
 
 ```text
-backend/app/data/videos/fci/
-backend/app/data/videos/faie/
-```
-
-Open:
-
-```text
-http://127.0.0.1:8000/api/status/fci/video-snapshot
-```
-
-Optional frame selection:
-
-```text
-http://127.0.0.1:8000/api/status/fci/video-snapshot?frame_index=10
+http://127.0.0.1:8001/api/status/fci/video-snapshot?frame_index=0&use_cache=false
+http://127.0.0.1:8001/api/status/faie/video-snapshot?frame_index=0&use_cache=false
 ```
 
 Expected:
 
 ```text
-JSON response contains normal parking counts
 JSON response includes source.type = video_snapshot
-JSON response includes selected frame_index
+source.frame_index matches the requested frame or the last valid frame
+total_slots is 79 for FCI and 40 for FAIE
+available_count + occupied_count = total_slots
 ```
 
-### Multi-Frame Video Samples
-
-Place a video under:
+Video debug:
 
 ```text
-backend/app/data/videos/fci/
-backend/app/data/videos/faie/
-```
-
-Open:
-
-```text
-http://127.0.0.1:8000/api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
+http://127.0.0.1:8001/api/debug/fci?source=video&frame_index=0
+http://127.0.0.1:8001/api/debug/faie?source=video&frame_index=0
 ```
 
 Expected:
 
 ```text
-JSON response includes source.type = video_samples
-source.frame_indices lists the sampled frame numbers
-samples contains one occupancy result per sampled frame
-summary contains majority-vote occupancy per slot
-summary.sample_count matches the number of processed frames
+JPEG loads in browser
+vehicle boxes are drawn in blue
+slot polygons are red or green
+summary bar shows thresholds and vehicle count
+slot polygons align with the current video camera angle
 ```
 
-### Threshold Tuning Tests
-
-Use query parameters to compare output:
+Multi-frame samples:
 
 ```text
-/api/debug/fci?threshold=0.30&confidence=0.20&image_size=1600
-/api/debug/faie?threshold=0.30&confidence=0.20&image_size=1600
+http://127.0.0.1:8001/api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
 ```
 
-Lower confidence may detect more cars but can increase false positives. Larger image sizes improve small vehicle detection but increase processing time.
+Expected:
+
+```text
+source.type = video_samples
+source.frame_indices lists sampled frames
+samples contains one status result per frame
+summary contains majority-vote occupancy per slot
+```
 
 ## Frontend Manual Tests
 
@@ -164,72 +151,45 @@ http://localhost:5173/faie-parking
 Expected:
 
 ```text
-Page loads without console errors
-Available and occupied counts match backend
-Refresh button reloads backend status
-Auto refresh switch periodically reloads the current source
-Last updated timestamp changes after refresh
-Detection Debug opens the backend debug image in a new tab
-Video Snapshot button loads /api/status/{location_id}/video-snapshot
-Video Samples button loads /api/status/{location_id}/video-samples
+page loads without console errors
+video preview shows the intended local video
+initial status comes from video frame 0
+playing the video updates the dashboard status as frame sync requests complete
+Refresh reloads video frame 0
+Video Snapshot samples the current reported frame
+Video Samples loads the majority-vote summary
+Detection Debug opens the current video-frame overlay
+Demo Random still works without video analysis
 ```
 
-## Build Verification
+## Automated Checks
 
-Run:
+Backend tests:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 -m pytest backend/app/tests
+```
+
+Frontend build:
 
 ```powershell
 cd frontend
 npm run build
 ```
 
-Expected:
-
-```text
-Vite build completes successfully
-No TypeScript or import errors
-```
-
-Backend syntax check:
+Optional backend syntax check:
 
 ```powershell
 py -3.11 -c "import ast, pathlib; [ast.parse(path.read_text(encoding='utf-8')) for path in pathlib.Path('backend/app').rglob('*.py')]; print('syntax ok')"
-```
-
-Expected:
-
-```text
-syntax ok
-```
-
-## Planned Automated Tests
-
-Backend tests to add:
-
-```text
-GET /api/health returns status ok: done
-GET /api/status/fci returns expected response fields: done
-GET /api/status/faie accepts tuning query params: done
-invalid location returns 404: done
-debug endpoint returns image/jpeg: done
-video snapshot endpoint returns status JSON: done
-video samples endpoint returns aggregated status JSON: done
-```
-
-Frontend tests are not required yet, but future checks can verify that:
-
-```text
-parking pages render
-refresh button calls the API
-last updated text appears after successful fetch
-debug link points to the correct backend URL
 ```
 
 ## Known Testing Risks
 
 ```text
 Results depend on pretrained YOLO behavior.
-Results may change if model weights or image resolution settings change.
-Real video testing may require different thresholds from static image testing.
-Camera angle, shadows, trees, and occlusions can affect detection accuracy.
+Camera angle changes require regenerated slot polygons.
+Video frame analysis may lag playback on slower machines.
+Tree cover, shadows, and occlusion can reduce vehicle detection accuracy.
+Cached frame results can become stale when a video is replaced with the same filename.
 ```

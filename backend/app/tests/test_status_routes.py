@@ -54,6 +54,8 @@ class FakeVideoSnapshotService:
         location_id,
         frame_index=0,
         include_debug_image=False,
+        use_cache=True,
+        save_result=True,
         overlap_threshold=None,
         box_overlap_threshold=None,
         confidence_threshold=None,
@@ -72,6 +74,7 @@ class FakeVideoSnapshotService:
                 "type": "video_snapshot",
                 "video_path": "dummy.mp4",
                 "frame_index": frame_index,
+                "cached": use_cache,
             },
         }
         if include_debug_image:
@@ -140,6 +143,19 @@ class FakeVideoSnapshotService:
         video_path = Path(gettempdir()) / "parkviewrt_test_video.mp4"
         video_path.write_bytes(b"video")
         return video_path
+
+    def get_video_metadata(self, location_id):
+        if location_id not in {"fci", "faie"}:
+            raise FileNotFoundError(f"No video found for location: {location_id}")
+
+        return {
+            "location_id": location_id,
+            "video_path": "dummy.mp4",
+            "file_name": "dummy.mp4",
+            "frame_count": 120,
+            "fps": 30.0,
+            "duration_seconds": 4.0,
+        }
 
 
 def test_health_endpoint(monkeypatch):
@@ -282,6 +298,7 @@ def test_video_snapshot_endpoint_returns_status(monkeypatch):
         "type": "video_snapshot",
         "video_path": "dummy.mp4",
         "frame_index": 3,
+        "cached": True,
     }
 
 
@@ -345,3 +362,20 @@ def test_video_endpoint_returns_selected_video(monkeypatch):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("video/mp4")
     assert response.content == b"video"
+
+
+def test_video_metadata_endpoint_returns_frame_details(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get("/api/video/fci/metadata")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "location_id": "fci",
+        "video_path": "dummy.mp4",
+        "file_name": "dummy.mp4",
+        "frame_count": 120,
+        "fps": 30.0,
+        "duration_seconds": 4.0,
+    }

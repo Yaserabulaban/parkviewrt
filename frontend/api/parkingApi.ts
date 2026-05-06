@@ -1,5 +1,9 @@
 import { API_BASE_URL } from "../config/env";
-import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
+import type {
+  ParkingStatusResponse,
+  ParkingVideoMetadata,
+  VideoSamplesResponse,
+} from "../types/parking";
 
 export async function getParkingStatus(
   locationId: "fci" | "faie"
@@ -27,14 +31,33 @@ export async function getParkingDemoStatus(
 
 export async function getParkingVideoSnapshotStatus(
   locationId: "fci" | "faie",
-  frameIndex = 0
+  frameIndex = 0,
+  useCache = true,
+  saveResult = true
 ): Promise<ParkingStatusResponse> {
+  const params = new URLSearchParams({
+    frame_index: String(frameIndex),
+    use_cache: String(useCache),
+    save_result: String(saveResult),
+  });
   const response = await fetch(
-    `${API_BASE_URL}/api/status/${locationId}/video-snapshot?frame_index=${frameIndex}`
+    `${API_BASE_URL}/api/status/${locationId}/video-snapshot?${params.toString()}`
   );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch video snapshot status for ${locationId}`);
+  }
+
+  return response.json();
+}
+
+export async function getParkingVideoMetadata(
+  locationId: "fci" | "faie"
+): Promise<ParkingVideoMetadata> {
+  const response = await fetch(`${API_BASE_URL}/api/video/${locationId}/metadata`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch video metadata for ${locationId}`);
   }
 
   return response.json();

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import cv2
@@ -6,6 +7,7 @@ from app.services.occupancy import BASE_DIR, ParkingOccupancyService
 
 
 VIDEOS_DIR = BASE_DIR / "data" / "videos"
+VIDEO_STATUS_CACHE_DIR = BASE_DIR / "data" / "outputs" / "video_status_cache"
 SUPPORTED_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov", ".mkv")
 
 
@@ -18,6 +20,8 @@ class VideoSnapshotService:
         location_id: str,
         frame_index: int = 0,
         include_debug_image: bool = False,
+        use_cache: bool = True,
+        save_result: bool = True,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -28,6 +32,18 @@ class VideoSnapshotService:
 
         normalized_location_id = location_id.lower()
         video_path = self._find_video_path(normalized_location_id)
+        cache_path = self._get_status_cache_path(
+            normalized_location_id,
+            video_path,
+            frame_index,
+            overlap_threshold=overlap_threshold,
+            box_overlap_threshold=box_overlap_threshold,
+            confidence_threshold=confidence_threshold,
+            image_size=image_size,
+        )
+        if use_cache and cache_path.exists() and not include_debug_image:
+            return self._read_cached_status(cache_path)
+
         frame, actual_frame_index = self._read_frame(video_path, frame_index)
         status = self.occupancy_service.get_frame_status(
             normalized_location_id,
@@ -41,6 +57,7 @@ class VideoSnapshotService:
             "type": "video_snapshot",
             "video_path": str(video_path),
             "frame_index": actual_frame_index,
+            "cached": False,
         }
         if include_debug_image:
             debug_image_path = self.occupancy_service.create_debug_frame_image(
@@ -54,10 +71,39 @@ class VideoSnapshotService:
             )
             status["source"]["debug_image_path"] = str(debug_image_path)
 
+        if save_result:
+            cache_path = self._get_status_cache_path(
+                normalized_location_id,
+                video_path,
+                actual_frame_index,
+                overlap_threshold=overlap_threshold,
+                box_overlap_threshold=box_overlap_threshold,
+                confidence_threshold=confidence_threshold,
+                image_size=image_size,
+            )
+            self._write_cached_status(cache_path, status)
+
         return status
 
     def get_video_path(self, location_id: str) -> Path:
         return self._find_video_path(location_id.lower())
+
+    def get_video_metadata(self, location_id: str) -> dict:
+        normalized_location_id = location_id.lower()
+        video_path = self._find_video_path(normalized_location_id)
+        metadata = self._get_video_metadata(video_path)
+        fps = metadata["fps"]
+        frame_count = metadata["frame_count"]
+        duration_seconds = frame_count / fps if fps > 0 and frame_count > 0 else 0
+
+        return {
+            "location_id": normalized_location_id,
+            "video_path": str(video_path),
+            "file_name": video_path.name,
+            "frame_count": frame_count,
+            "fps": fps,
+            "duration_seconds": duration_seconds,
+        }
 
     def get_sampled_status(
         self,
@@ -128,6 +174,51 @@ class VideoSnapshotService:
             raise FileNotFoundError(f"No video found for location: {location_id}")
 
         return candidates[0]
+
+    def _get_status_cache_path(
+        self,
+        location_id: str,
+        video_path: Path,
+        frame_index: int,
+        overlap_threshold: float | None,
+        box_overlap_threshold: float | None,
+        confidence_threshold: float | None,
+        image_size: int | None,
+    ) -> Path:
+        tuning_key = "_".join(
+            [
+                f"s{self._cache_value(overlap_threshold)}",
+                f"b{self._cache_value(box_overlap_threshold)}",
+                f"c{self._cache_value(confidence_threshold)}",
+                f"i{self._cache_value(image_size)}",
+            ]
+        )
+        return (
+            VIDEO_STATUS_CACHE_DIR
+            / location_id
+            / video_path.stem
+            / tuning_key
+            / f"frame_{frame_index}.json"
+        )
+
+    def _cache_value(self, value) -> str:
+        return "default" if value is None else str(value).replace(".", "p")
+
+    def _read_cached_status(self, cache_path: Path) -> dict:
+        with cache_path.open("r", encoding="utf-8") as cache_file:
+            status = json.load(cache_file)
+        status.setdefault("source", {})
+        status["source"]["cached"] = True
+        status["source"]["cache_path"] = str(cache_path)
+        return status
+
+    def _write_cached_status(self, cache_path: Path, status: dict) -> None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cached_status = json.loads(json.dumps(status))
+        cached_status.setdefault("source", {})
+        cached_status["source"]["cache_path"] = str(cache_path)
+        with cache_path.open("w", encoding="utf-8") as cache_file:
+            json.dump(cached_status, cache_file, indent=2)
 
     def _read_frame(self, video_path: Path, frame_index: int):
         cap = cv2.VideoCapture(str(video_path))

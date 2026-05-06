@@ -26,6 +26,7 @@ export default function FCIParkingView() {
     fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,
+    syncVideoFrame,
   } = useParkingStatus('fci');
 
   const monitoredSlotIds = new Set(
@@ -272,7 +273,11 @@ export default function FCIParkingView() {
             </div>
           </div>
 
-          <ParkingVideoPreview locationId="fci" title="FCI Day Footage" />
+          <ParkingVideoPreview
+            locationId="fci"
+            title="FCI Day Footage"
+            onFrameChange={syncVideoFrame}
+          />
         </div>
       </div>
     </div>

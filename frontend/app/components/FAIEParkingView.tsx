@@ -26,6 +26,7 @@ export default function FAIEParkingView() {
     fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,
+    syncVideoFrame,
   } = useParkingStatus('faie');
 
   const monitoredSlotIds = new Set(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']);
@@ -267,7 +268,11 @@ export default function FAIEParkingView() {
             </div>
           </div>
 
-          <ParkingVideoPreview locationId="faie" title="FAIE Day Footage" />
+          <ParkingVideoPreview
+            locationId="faie"
+            title="FAIE Day Footage"
+            onFrameChange={syncVideoFrame}
+          />
         </div>
       </div>
     </div>

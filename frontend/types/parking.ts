@@ -9,6 +9,17 @@ export interface VideoSnapshotSource {
   type: "video_snapshot";
   video_path: string;
   frame_index: number;
+  cached?: boolean;
+  cache_path?: string;
+}
+
+export interface ParkingVideoMetadata {
+  location_id: "fci" | "faie";
+  video_path: string;
+  file_name: string;
+  frame_count: number;
+  fps: number;
+  duration_seconds: number;
 }
 
 export interface VideoSamplesSource {

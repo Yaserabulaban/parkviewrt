@@ -82,6 +82,8 @@ def get_video_snapshot_status(
     location_id: str,
     frame_index: int = 0,
     debug: bool = False,
+    use_cache: bool = True,
+    save_result: bool = True,
     threshold: float | None = None,
     box_threshold: float | None = None,
     confidence: float | None = None,
@@ -92,6 +94,8 @@ def get_video_snapshot_status(
             location_id,
             frame_index=frame_index,
             include_debug_image=debug,
+            use_cache=use_cache,
+            save_result=save_result,
             overlap_threshold=threshold,
             box_overlap_threshold=box_threshold,
             confidence_threshold=confidence,
@@ -127,6 +131,14 @@ def get_video_sampled_status(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/video/{location_id}/metadata")
+def get_parking_video_metadata(location_id: str):
+    try:
+        return video_snapshot_service.get_video_metadata(location_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

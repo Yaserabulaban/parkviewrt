@@ -8,6 +8,7 @@ import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parki
 
 type StatusMode = "static" | "demo" | "video_snapshot" | "video_samples";
 const DEFAULT_VIDEO_FRAME_INDEX = 300;
+const MIN_SYNC_FRAME_DISTANCE = 15;
 
 export function useParkingStatus(locationId: "fci" | "faie") {
   const [data, setData] = useState<ParkingStatusResponse | null>(null);
@@ -21,6 +22,8 @@ export function useParkingStatus(locationId: "fci" | "faie") {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const hasLoaded = useRef(false);
+  const syncRequestInFlight = useRef(false);
+  const lastSyncedFrame = useRef<number | null>(null);
 
   const fetchVideoSnapshot = useCallback(async (frameIndex = 0) => {
     try {
@@ -37,6 +40,43 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       setLoading(false);
       setSnapshotLoading(false);
       setRefreshing(false);
+    }
+  }, [locationId]);
+
+  const syncVideoFrame = useCallback(async (frameIndex: number) => {
+    const normalizedFrameIndex = Math.max(0, Math.floor(frameIndex));
+    if (
+      syncRequestInFlight.current ||
+      (
+        lastSyncedFrame.current !== null &&
+        Math.abs(normalizedFrameIndex - lastSyncedFrame.current) < MIN_SYNC_FRAME_DISTANCE
+      )
+    ) {
+      return;
+    }
+
+    syncRequestInFlight.current = true;
+    lastSyncedFrame.current = normalizedFrameIndex;
+
+    try {
+      setRefreshing(true);
+      setError(null);
+      const result = await getParkingVideoSnapshotStatus(
+        locationId,
+        normalizedFrameIndex,
+        true,
+        true
+      );
+      setData(result);
+      setStatusMode("video_snapshot");
+      setLastUpdated(new Date());
+      hasLoaded.current = true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      syncRequestInFlight.current = false;
     }
   }, [locationId]);
 
@@ -122,6 +162,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,
+    syncVideoFrame,
   };
 }
 

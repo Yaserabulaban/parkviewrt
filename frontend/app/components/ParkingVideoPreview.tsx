@@ -16,6 +16,9 @@ export default function ParkingVideoPreview({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [metadata, setMetadata] = useState<ParkingVideoMetadata | null>(null);
   const [metadataError, setMetadataError] = useState<string | null>(null);
+  const videoVersion = metadata
+    ? `${metadata.file_size}-${metadata.last_modified}`
+    : undefined;
 
   useEffect(() => {
     let active = true;
@@ -72,7 +75,7 @@ export default function ParkingVideoPreview({
         loop
         playsInline
         preload="metadata"
-        src={getParkingVideoUrl(locationId)}
+        src={getParkingVideoUrl(locationId, videoVersion)}
       />
 
       <div className="mt-3 text-xs text-slate-600">

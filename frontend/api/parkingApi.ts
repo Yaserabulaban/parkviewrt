@@ -97,6 +97,7 @@ export function getParkingDebugImageUrl(
   return `${API_BASE_URL}/api/debug/${locationId}?${params.toString()}`;
 }
 
-export function getParkingVideoUrl(locationId: "fci" | "faie") {
-  return `${API_BASE_URL}/api/video/${locationId}`;
+export function getParkingVideoUrl(locationId: "fci" | "faie", version?: string) {
+  const params = version ? `?v=${encodeURIComponent(version)}` : "";
+  return `${API_BASE_URL}/api/video/${locationId}${params}`;
 }

@@ -51,83 +51,62 @@ def build_fci_slots():
         build_row(
             "A",
             1,
-            8,
-            top_left=(30, 430),
-            top_right=(515, 410),
-            bottom_left=(30, 520),
-            bottom_right=(520, 500),
+            6,
+            top_left=(-5, 515),
+            top_right=(375, 500),
+            bottom_left=(-5, 620),
+            bottom_right=(380, 605),
             gap_ratio=0.16,
         )
     )
     slots.extend(
         build_row(
             "A",
-            9,
-            24,
-            top_left=(520, 545),
-            top_right=(1645, 455),
-            bottom_left=(535, 700),
-            bottom_right=(1650, 585),
-            gap_ratio=0.18,
+            7,
+            20,
+            top_left=(560, 545),
+            top_right=(1585, 455),
+            bottom_left=(575, 715),
+            bottom_right=(1585, 585),
+            gap_ratio=0.16,
         )
     )
     slots.extend(
         build_row(
             "A",
-            33,
-            16,
-            top_left=(65, 635),
-            top_right=(895, 595),
-            bottom_left=(75, 835),
-            bottom_right=(915, 745),
-            gap_ratio=0.18,
+            27,
+            20,
+            top_left=(0, 655),
+            top_right=(960, 620),
+            bottom_left=(0, 900),
+            bottom_right=(980, 780),
+            gap_ratio=0.16,
         )
     )
     slots.extend(
         build_row(
             "A",
-            49,
-            16,
-            top_left=(530, 910),
-            top_right=(1395, 805),
+            47,
+            20,
+            top_left=(520, 900),
+            top_right=(1435, 780),
             bottom_left=(535, 1080),
-            bottom_right=(1415, 1015),
-            gap_ratio=0.18,
+            bottom_right=(1455, 1005),
+            gap_ratio=0.16,
         )
     )
     slots.extend(
         build_row(
             "A",
-            65,
-            12,
-            top_left=(1385, 700),
-            top_right=(1920, 680),
-            bottom_left=(1400, 860),
-            bottom_right=(1920, 825),
+            67,
+            14,
+            top_left=(1360, 690),
+            top_right=(1920, 665),
+            bottom_left=(1375, 880),
+            bottom_right=(1920, 835),
             gap_ratio=0.14,
         )
     )
-    slots.extend(
-        build_row(
-            "A",
-            77,
-            4,
-            top_left=(1720, 405),
-            top_right=(1920, 430),
-            bottom_left=(1735, 545),
-            bottom_right=(1920, 555),
-            gap_ratio=0.18,
-        )
-    )
-
-    for slot in slots:
-        if slot["slot_id"] == "A67":
-            slot["points"] = [
-                [1478, 790],
-                [1535, 785],
-                [1548, 930],
-                [1490, 935],
-            ]
 
     slots = [slot for slot in slots if slot["slot_id"] != "A77"]
 

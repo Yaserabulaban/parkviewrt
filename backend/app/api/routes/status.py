@@ -151,6 +151,10 @@ def get_parking_video(location_id: str):
             video_path,
             media_type=VIDEO_MEDIA_TYPES.get(video_path.suffix.lower(), "application/octet-stream"),
             filename=video_path.name,
+            headers={
+                "Cache-Control": "no-store, max-age=0",
+                "Pragma": "no-cache",
+            },
         )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

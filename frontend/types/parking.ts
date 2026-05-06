@@ -17,6 +17,8 @@ export interface ParkingVideoMetadata {
   location_id: "fci" | "faie";
   video_path: string;
   file_name: string;
+  file_size: number;
+  last_modified: number;
   frame_count: number;
   fps: number;
   duration_seconds: number;

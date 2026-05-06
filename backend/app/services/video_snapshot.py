@@ -100,6 +100,8 @@ class VideoSnapshotService:
             "location_id": normalized_location_id,
             "video_path": str(video_path),
             "file_name": video_path.name,
+            "file_size": video_path.stat().st_size,
+            "last_modified": video_path.stat().st_mtime,
             "frame_count": frame_count,
             "fps": fps,
             "duration_seconds": duration_seconds,

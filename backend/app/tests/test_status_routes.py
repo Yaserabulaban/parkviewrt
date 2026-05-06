@@ -152,6 +152,8 @@ class FakeVideoSnapshotService:
             "location_id": location_id,
             "video_path": "dummy.mp4",
             "file_name": "dummy.mp4",
+            "file_size": 5,
+            "last_modified": 123.0,
             "frame_count": 120,
             "fps": 30.0,
             "duration_seconds": 4.0,
@@ -388,6 +390,7 @@ def test_video_endpoint_returns_selected_video(monkeypatch):
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("video/mp4")
+    assert response.headers["cache-control"] == "no-store, max-age=0"
     assert response.content == b"video"
 
 
@@ -402,6 +405,8 @@ def test_video_metadata_endpoint_returns_frame_details(monkeypatch):
         "location_id": "fci",
         "video_path": "dummy.mp4",
         "file_name": "dummy.mp4",
+        "file_size": 5,
+        "last_modified": 123.0,
         "frame_count": 120,
         "fps": 30.0,
         "duration_seconds": 4.0,

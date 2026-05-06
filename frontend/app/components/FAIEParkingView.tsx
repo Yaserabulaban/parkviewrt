@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { ArrowLeft, ExternalLink, Film, RefreshCw, Shuffle } from 'lucide-react';
 import { Switch } from './ui/switch';
 import ParkingSlot from '../components/ParkingSlot';
+import ParkingVideoPreview from '../components/ParkingVideoPreview';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
 import { getParkingDebugImageUrl } from '@/api/parkingApi';
@@ -119,7 +120,7 @@ export default function FAIEParkingView() {
               </Button>
 
               <Button
-                onClick={() => fetchVideoSnapshot(0)}
+                onClick={() => fetchVideoSnapshot(300)}
                 disabled={busy}
                 variant="outline"
               >
@@ -193,76 +194,80 @@ export default function FAIEParkingView() {
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="overflow-x-auto">
-            <div className="relative mx-auto h-[580px] max-w-[1200px] overflow-hidden rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
-              <div className="absolute inset-x-0 top-0 h-24 bg-[#86a66f]" />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 rounded-lg bg-white p-8 shadow-lg">
+            <div className="overflow-x-auto">
+              <div className="relative mx-auto h-[580px] max-w-[1200px] overflow-hidden rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
+                <div className="absolute inset-x-0 top-0 h-24 bg-[#86a66f]" />
 
-              <div className="absolute left-[70px] top-[220px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
-              <div className="absolute left-[58px] top-[410px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
-              <div className="absolute left-[900px] top-[220px] h-[278px] w-24 rounded-r-md bg-[#565d5b]" />
-              <div className="absolute left-[100px] top-[262px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
-              <div className="absolute left-[100px] top-[452px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
-              <div className="absolute left-[948px] top-[252px] h-[200px] border-l-2 border-dashed border-yellow-300/80" />
+                <div className="absolute left-[70px] top-[220px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
+                <div className="absolute left-[58px] top-[410px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
+                <div className="absolute left-[900px] top-[220px] h-[278px] w-24 rounded-r-md bg-[#565d5b]" />
+                <div className="absolute left-[100px] top-[262px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
+                <div className="absolute left-[100px] top-[452px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
+                <div className="absolute left-[948px] top-[252px] h-[200px] border-l-2 border-dashed border-yellow-300/80" />
 
-              <div
-                className="absolute left-[42px] top-[126px] grid gap-1"
-                style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}
-              >
-                {baseSlots.map((id) => {
-                  const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
-                  return (
+                <div
+                  className="absolute left-[42px] top-[126px] grid gap-1"
+                  style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}
+                >
+                  {baseSlots.map((id) => {
+                    const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
+                    return (
+                      <ParkingSlot
+                        key={id}
+                        id={id}
+                        isOccupied={slotsMap.get(id) ?? false}
+                        monitored={monitored}
+                        size="map"
+                        className="h-14 w-8 text-[10px]"
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="absolute left-[1100px] top-[200px] flex flex-col gap-3">
+                  {rightSideSlots.map((id) => {
+                    const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
+                    return (
+                      <ParkingSlot
+                        key={id}
+                        id={id}
+                        isOccupied={slotsMap.get(id) ?? false}
+                        monitored={monitored}
+                        size="map"
+                        className="h-14 w-8 -rotate-[20deg] text-[10px]"
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="absolute left-[250px] top-[330px] grid grid-cols-10 gap-3">
+                  {centerSlots.map((id) => (
                     <ParkingSlot
                       key={id}
                       id={id}
                       isOccupied={slotsMap.get(id) ?? false}
-                      monitored={monitored}
+                      monitored={slotsMap.has(id)}
                       size="map"
                       className="h-14 w-8 text-[10px]"
                     />
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
 
-              <div className="absolute left-[1100px] top-[200px] flex flex-col gap-3">
-                {rightSideSlots.map((id) => {
-                  const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
-                  return (
-                    <ParkingSlot
-                      key={id}
-                      id={id}
-                      isOccupied={slotsMap.get(id) ?? false}
-                      monitored={monitored}
-                      size="map"
-                      className="h-14 w-8 -rotate-[20deg] text-[10px]"
-                    />
-                  );
-                })}
-              </div>
-
-              <div className="absolute left-[250px] top-[330px] grid grid-cols-10 gap-3">
-                {centerSlots.map((id) => (
-                  <ParkingSlot
-                    key={id}
-                    id={id}
-                    isOccupied={slotsMap.get(id) ?? false}
-                    monitored={slotsMap.has(id)}
-                    size="map"
-                    className="h-14 w-8 text-[10px]"
-                  />
-                ))}
-              </div>
-
-              <div className="absolute right-6 top-6 flex items-center gap-3 rounded bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700">
-                <span className="inline-block h-3 w-3 rounded bg-red-500" />
-                Occupied
-                <span className="inline-block h-3 w-3 rounded bg-green-500" />
-                Available
-                <span className="inline-block h-3 w-3 rounded bg-slate-300" />
-                Not monitored
+                <div className="absolute right-6 top-6 flex items-center gap-3 rounded bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700">
+                  <span className="inline-block h-3 w-3 rounded bg-red-500" />
+                  Occupied
+                  <span className="inline-block h-3 w-3 rounded bg-green-500" />
+                  Available
+                  <span className="inline-block h-3 w-3 rounded bg-slate-300" />
+                  Not monitored
+                </div>
               </div>
             </div>
           </div>
+
+          <ParkingVideoPreview locationId="faie" title="FAIE Day Footage" />
         </div>
       </div>
     </div>

@@ -133,6 +133,14 @@ class FakeVideoSnapshotService:
             ],
         }
 
+    def get_video_path(self, location_id):
+        if location_id not in {"fci", "faie"}:
+            raise FileNotFoundError(f"No video found for location: {location_id}")
+
+        video_path = Path(gettempdir()) / "parkviewrt_test_video.mp4"
+        video_path.write_bytes(b"video")
+        return video_path
+
 
 def test_health_endpoint(monkeypatch):
     monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
@@ -326,3 +334,14 @@ def test_video_samples_endpoint_returns_404_when_video_missing(monkeypatch):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "No video found for location: unknown"}
+
+
+def test_video_endpoint_returns_selected_video(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get("/api/video/fci")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("video/mp4")
+    assert response.content == b"video"

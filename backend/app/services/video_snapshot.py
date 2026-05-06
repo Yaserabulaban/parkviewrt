@@ -56,6 +56,9 @@ class VideoSnapshotService:
 
         return status
 
+    def get_video_path(self, location_id: str) -> Path:
+        return self._find_video_path(location_id.lower())
+
     def get_sampled_status(
         self,
         location_id: str,

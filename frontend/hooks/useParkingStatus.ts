@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getParkingDemoStatus,
-  getParkingStatus,
   getParkingVideoSamplesStatus,
   getParkingVideoSnapshotStatus,
 } from "../api/parkingApi";
 import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
 
 type StatusMode = "static" | "demo" | "video_snapshot" | "video_samples";
+const DEFAULT_VIDEO_FRAME_INDEX = 300;
 
 export function useParkingStatus(locationId: "fci" | "faie") {
   const [data, setData] = useState<ParkingStatusResponse | null>(null);
@@ -17,31 +17,10 @@ export function useParkingStatus(locationId: "fci" | "faie") {
   const [sampleLoading, setSampleLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [statusMode, setStatusMode] = useState<StatusMode>("static");
+  const [statusMode, setStatusMode] = useState<StatusMode>("video_snapshot");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const hasLoaded = useRef(false);
-
-  const fetchStatus = useCallback(async () => {
-    try {
-      if (hasLoaded.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-      const result = await getParkingStatus(locationId);
-      setData(result);
-      setStatusMode("static");
-      setLastUpdated(new Date());
-      hasLoaded.current = true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [locationId]);
 
   const fetchVideoSnapshot = useCallback(async (frameIndex = 0) => {
     try {
@@ -57,6 +36,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     } finally {
       setLoading(false);
       setSnapshotLoading(false);
+      setRefreshing(false);
     }
   }, [locationId]);
 
@@ -103,8 +83,8 @@ export function useParkingStatus(locationId: "fci" | "faie") {
   );
 
   useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+    fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
+  }, [fetchVideoSnapshot]);
 
   useEffect(() => {
     if (!autoRefresh) {
@@ -115,16 +95,16 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       if (statusMode === "video_samples") {
         fetchVideoSamples();
       } else if (statusMode === "video_snapshot") {
-        fetchVideoSnapshot(0);
+        fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
       } else if (statusMode === "demo") {
         fetchDemoStatus();
       } else {
-        fetchStatus();
+        fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
       }
     }, 15000);
 
     return () => window.clearInterval(intervalId);
-  }, [autoRefresh, fetchDemoStatus, fetchStatus, fetchVideoSamples, fetchVideoSnapshot, statusMode]);
+  }, [autoRefresh, fetchDemoStatus, fetchVideoSamples, fetchVideoSnapshot, statusMode]);
 
   return {
     data,
@@ -138,7 +118,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     error,
     lastUpdated,
     statusMode,
-    refetch: fetchStatus,
+    refetch: () => fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX),
     fetchDemoStatus,
     fetchVideoSnapshot,
     fetchVideoSamples,

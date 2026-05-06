@@ -65,3 +65,7 @@ export async function getParkingVideoSamplesStatus(
 export function getParkingDebugImageUrl(locationId: "fci" | "faie") {
   return `${API_BASE_URL}/api/debug/${locationId}`;
 }
+
+export function getParkingVideoUrl(locationId: "fci" | "faie") {
+  return `${API_BASE_URL}/api/video/${locationId}`;
+}

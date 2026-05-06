@@ -13,6 +13,13 @@ settings = get_settings()
 occupancy_service = ParkingOccupancyService()
 video_snapshot_service = VideoSnapshotService(occupancy_service)
 
+VIDEO_MEDIA_TYPES = {
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".avi": "video/x-msvideo",
+    ".mkv": "video/x-matroska",
+}
+
 
 @router.get("/health")
 def get_health_status():
@@ -120,6 +127,19 @@ def get_video_sampled_status(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/video/{location_id}")
+def get_parking_video(location_id: str):
+    try:
+        video_path = video_snapshot_service.get_video_path(location_id)
+        return FileResponse(
+            video_path,
+            media_type=VIDEO_MEDIA_TYPES.get(video_path.suffix.lower(), "application/octet-stream"),
+            filename=video_path.name,
+        )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

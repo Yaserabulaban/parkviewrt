@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { ArrowLeft, ExternalLink, Film, RefreshCw, Shuffle } from 'lucide-react';
-import { Switch } from './ui/switch';
 import ParkingSlot from '../components/ParkingSlot';
 import ParkingVideoPreview from '../components/ParkingVideoPreview';
 import logoImage from '@/assets/mmu-logo.png';
@@ -17,8 +16,6 @@ export default function FAIEParkingView() {
     snapshotLoading,
     sampleLoading,
     demoLoading,
-    autoRefresh,
-    setAutoRefresh,
     error,
     lastUpdated,
     statusMode,
@@ -79,7 +76,10 @@ export default function FAIEParkingView() {
         second: '2-digit',
       })
     : 'Not updated yet';
-  const debugImageUrl = getParkingDebugImageUrl('faie');
+  const debugFrameIndex = data?.source?.type === 'video_snapshot'
+    ? data.source.frame_index
+    : 0;
+  const debugImageUrl = getParkingDebugImageUrl('faie', debugFrameIndex);
   const statusSourceLabel =
     data?.source?.type === 'video_snapshot'
       ? `Video frame ${data.source.frame_index}`
@@ -121,7 +121,7 @@ export default function FAIEParkingView() {
               </Button>
 
               <Button
-                onClick={() => fetchVideoSnapshot(300)}
+                onClick={() => fetchVideoSnapshot(debugFrameIndex)}
                 disabled={busy}
                 variant="outline"
               >
@@ -153,15 +153,6 @@ export default function FAIEParkingView() {
                   Detection Debug
                 </a>
               </Button>
-
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <Switch
-                  checked={autoRefresh}
-                  onCheckedChange={setAutoRefresh}
-                  disabled={loading}
-                />
-                Auto refresh
-              </label>
 
               <span className="text-sm text-gray-600">
                 Last updated: {lastUpdatedLabel} | Source: {statusSourceLabel}

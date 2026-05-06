@@ -105,6 +105,31 @@ class VideoSnapshotService:
             "duration_seconds": duration_seconds,
         }
 
+    def create_debug_snapshot_image(
+        self,
+        location_id: str,
+        frame_index: int = 0,
+        overlap_threshold: float | None = None,
+        box_overlap_threshold: float | None = None,
+        confidence_threshold: float | None = None,
+        image_size: int | None = None,
+    ) -> Path:
+        if frame_index < 0:
+            raise ValueError("frame_index must be 0 or greater")
+
+        normalized_location_id = location_id.lower()
+        video_path = self._find_video_path(normalized_location_id)
+        frame, actual_frame_index = self._read_frame(video_path, frame_index)
+        return self.occupancy_service.create_debug_frame_image(
+            normalized_location_id,
+            frame,
+            output_suffix=f"video_frame_{actual_frame_index}",
+            overlap_threshold=overlap_threshold,
+            box_overlap_threshold=box_overlap_threshold,
+            confidence_threshold=confidence_threshold,
+            image_size=image_size,
+        )
+
     def get_sampled_status(
         self,
         location_id: str,

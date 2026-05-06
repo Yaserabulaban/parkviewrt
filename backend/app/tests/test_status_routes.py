@@ -157,6 +157,22 @@ class FakeVideoSnapshotService:
             "duration_seconds": 4.0,
         }
 
+    def create_debug_snapshot_image(
+        self,
+        location_id,
+        frame_index=0,
+        overlap_threshold=None,
+        box_overlap_threshold=None,
+        confidence_threshold=None,
+        image_size=None,
+    ):
+        if location_id not in {"fci", "faie"}:
+            raise FileNotFoundError(f"No video found for location: {location_id}")
+
+        debug_image_path = Path(gettempdir()) / f"parkviewrt_test_video_{frame_index}.jpg"
+        debug_image_path.write_bytes(b"\xff\xd8\xff\xd9")
+        return debug_image_path
+
 
 def test_health_endpoint(monkeypatch):
     monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
@@ -277,10 +293,21 @@ def test_demo_status_endpoint_rejects_invalid_occupancy_rate():
 
 
 def test_debug_endpoint_returns_jpeg(monkeypatch):
-    monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
     client = TestClient(app)
 
     response = client.get("/api/debug/fci")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/jpeg"
+    assert response.content.startswith(b"\xff\xd8")
+
+
+def test_static_debug_endpoint_returns_jpeg(monkeypatch):
+    monkeypatch.setattr(status_routes, "occupancy_service", FakeOccupancyService())
+    client = TestClient(app)
+
+    response = client.get("/api/debug/fci", params={"source": "static"})
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"

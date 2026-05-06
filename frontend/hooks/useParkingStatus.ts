@@ -7,7 +7,7 @@ import {
 import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
 
 type StatusMode = "static" | "demo" | "video_snapshot" | "video_samples";
-const DEFAULT_VIDEO_FRAME_INDEX = 300;
+const DEFAULT_VIDEO_FRAME_INDEX = 0;
 const MIN_SYNC_FRAME_DISTANCE = 15;
 
 export function useParkingStatus(locationId: "fci" | "faie") {
@@ -17,7 +17,6 @@ export function useParkingStatus(locationId: "fci" | "faie") {
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [sampleLoading, setSampleLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
   const [statusMode, setStatusMode] = useState<StatusMode>("video_snapshot");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -126,26 +125,6 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
   }, [fetchVideoSnapshot]);
 
-  useEffect(() => {
-    if (!autoRefresh) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      if (statusMode === "video_samples") {
-        fetchVideoSamples();
-      } else if (statusMode === "video_snapshot") {
-        fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
-      } else if (statusMode === "demo") {
-        fetchDemoStatus();
-      } else {
-        fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
-      }
-    }, 15000);
-
-    return () => window.clearInterval(intervalId);
-  }, [autoRefresh, fetchDemoStatus, fetchVideoSamples, fetchVideoSnapshot, statusMode]);
-
   return {
     data,
     loading,
@@ -153,8 +132,6 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     snapshotLoading,
     sampleLoading,
     demoLoading,
-    autoRefresh,
-    setAutoRefresh,
     error,
     lastUpdated,
     statusMode,

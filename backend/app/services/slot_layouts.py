@@ -4,11 +4,13 @@ import random
 PARKING_SLOT_LAYOUTS = {
     "fci": {
         "display_slot_ids": [f"A{index}" for index in range(1, 81)],
-        "monitored_slot_ids": [f"A{index}" for index in range(1, 9)],
+        "monitored_slot_ids": [
+            f"A{index}" for index in range(1, 81) if index != 77
+        ],
     },
     "faie": {
         "display_slot_ids": [f"B{index}" for index in range(1, 41)],
-        "monitored_slot_ids": [f"B{index}" for index in range(1, 9)],
+        "monitored_slot_ids": [f"B{index}" for index in range(1, 41)],
     },
 }
 

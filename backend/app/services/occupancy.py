@@ -127,6 +127,36 @@ class ParkingOccupancyService:
         cv2.imwrite(str(output_path), image)
         return output_path
 
+    def create_debug_frame_image(
+        self,
+        location_id: str,
+        frame,
+        output_suffix: str,
+        overlap_threshold: float | None = None,
+        box_overlap_threshold: float | None = None,
+        confidence_threshold: float | None = None,
+        image_size: int | None = None,
+    ) -> Path:
+        analysis = self._analyze_location(
+            location_id,
+            image_source=frame,
+            overlap_threshold=overlap_threshold,
+            box_overlap_threshold=box_overlap_threshold,
+            confidence_threshold=confidence_threshold,
+            image_size=image_size,
+        )
+        image = frame.copy()
+
+        slot_lookup = {slot["slot_id"]: slot for slot in analysis["slots"]}
+        self._draw_slots(image, analysis["slot_data"]["slots"], slot_lookup)
+        self._draw_detections(image, analysis["detections"])
+        self._draw_summary(image, analysis)
+
+        OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+        output_path = OUTPUTS_DIR / f"{analysis['location_id']}_{output_suffix}_debug.jpg"
+        cv2.imwrite(str(output_path), image)
+        return output_path
+
     def _analyze_location(
         self,
         location_id: str,

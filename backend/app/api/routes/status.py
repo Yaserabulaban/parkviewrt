@@ -74,6 +74,7 @@ def get_demo_parking_status(
 def get_video_snapshot_status(
     location_id: str,
     frame_index: int = 0,
+    debug: bool = False,
     threshold: float | None = None,
     box_threshold: float | None = None,
     confidence: float | None = None,
@@ -83,6 +84,7 @@ def get_video_snapshot_status(
         return video_snapshot_service.get_snapshot_status(
             location_id,
             frame_index=frame_index,
+            include_debug_image=debug,
             overlap_threshold=threshold,
             box_overlap_threshold=box_threshold,
             confidence_threshold=confidence,

@@ -14,7 +14,7 @@ class YoloDetector:
         model_path = Path(model_path)
         model_path.parent.mkdir(parents=True, exist_ok=True)
         self.model = YOLO(str(model_path))
-        self.allowed_classes = {"car"}
+        self.allowed_classes = {"car", "truck"}
 
     def detect_cars(
         self,

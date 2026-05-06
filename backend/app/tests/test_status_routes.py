@@ -53,6 +53,7 @@ class FakeVideoSnapshotService:
         self,
         location_id,
         frame_index=0,
+        include_debug_image=False,
         overlap_threshold=None,
         box_overlap_threshold=None,
         confidence_threshold=None,
@@ -61,7 +62,7 @@ class FakeVideoSnapshotService:
         if location_id not in {"fci", "faie"}:
             raise FileNotFoundError(f"No video found for location: {location_id}")
 
-        return {
+        response = {
             "location_id": location_id,
             "total_slots": 1,
             "occupied_count": 1,
@@ -73,6 +74,10 @@ class FakeVideoSnapshotService:
                 "frame_index": frame_index,
             },
         }
+        if include_debug_image:
+            response["source"]["debug_image_path"] = "dummy_debug.jpg"
+
+        return response
 
     def get_sampled_status(
         self,
@@ -157,26 +162,13 @@ def test_config_endpoint_returns_detection_settings():
     assert config["detection"]["image_size"] == 1600
     assert config["detection"]["slot_overlap_threshold"] == 0.3
     assert config["detection"]["box_overlap_threshold"] == 0.2
-    assert config["slot_layouts"]["fci"]["monitored_slot_ids"] == [
-        "A1",
-        "A2",
-        "A3",
-        "A4",
-        "A5",
-        "A6",
-        "A7",
-        "A8",
-    ]
-    assert config["slot_layouts"]["faie"]["monitored_slot_ids"] == [
-        "B1",
-        "B2",
-        "B3",
-        "B4",
-        "B5",
-        "B6",
-        "B7",
-        "B8",
-    ]
+    assert config["slot_layouts"]["fci"]["monitored_slot_ids"][0] == "A1"
+    assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A80"
+    assert "A77" not in config["slot_layouts"]["fci"]["monitored_slot_ids"]
+    assert len(config["slot_layouts"]["fci"]["monitored_slot_ids"]) == 79
+    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][0] == "B1"
+    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][-1] == "B40"
+    assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 40
     assert config["slot_layouts"]["fci"]["display_slot_ids"][0] == "A1"
     assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A80"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
@@ -283,6 +275,19 @@ def test_video_snapshot_endpoint_returns_status(monkeypatch):
         "video_path": "dummy.mp4",
         "frame_index": 3,
     }
+
+
+def test_video_snapshot_endpoint_can_return_debug_image_path(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/fci/video-snapshot",
+        params={"frame_index": 3, "debug": True},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["source"]["debug_image_path"] == "dummy_debug.jpg"
 
 
 def test_video_snapshot_endpoint_returns_404_when_video_missing(monkeypatch):

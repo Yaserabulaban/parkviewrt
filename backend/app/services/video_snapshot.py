@@ -17,6 +17,7 @@ class VideoSnapshotService:
         self,
         location_id: str,
         frame_index: int = 0,
+        include_debug_image: bool = False,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -25,10 +26,11 @@ class VideoSnapshotService:
         if frame_index < 0:
             raise ValueError("frame_index must be 0 or greater")
 
-        video_path = self._find_video_path(location_id.lower())
+        normalized_location_id = location_id.lower()
+        video_path = self._find_video_path(normalized_location_id)
         frame, actual_frame_index = self._read_frame(video_path, frame_index)
         status = self.occupancy_service.get_frame_status(
-            location_id,
+            normalized_location_id,
             frame,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
@@ -40,6 +42,18 @@ class VideoSnapshotService:
             "video_path": str(video_path),
             "frame_index": actual_frame_index,
         }
+        if include_debug_image:
+            debug_image_path = self.occupancy_service.create_debug_frame_image(
+                normalized_location_id,
+                frame,
+                output_suffix=f"video_frame_{actual_frame_index}",
+                overlap_threshold=overlap_threshold,
+                box_overlap_threshold=box_overlap_threshold,
+                confidence_threshold=confidence_threshold,
+                image_size=image_size,
+            )
+            status["source"]["debug_image_path"] = str(debug_image_path)
+
         return status
 
     def get_sampled_status(

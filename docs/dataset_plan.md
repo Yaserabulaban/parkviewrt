@@ -7,7 +7,8 @@ This document describes the current data setup and the plan for maintaining FCI 
 Tracked reference images:
 
 ```text
-backend/app/data/images/fci.jpeg
+backend/app/data/images/fci_day.png
+backend/app/data/images/fci_night.png
 backend/app/data/images/faie.jpeg
 ```
 
@@ -53,11 +54,11 @@ frontend/dist/
 ## Current Slot Coverage
 
 ```text
-FCI: A1-A80 except A77, 79 monitored slots
+FCI: A1-A75, 75 monitored slots
 FAIE: B1-B40, 40 monitored slots
 ```
 
-The FCI polygons were regenerated against a stable day-video frame after removing footage where the tripod angle shifted. If the final FCI video is retaken from a different angle, regenerate `fci_slots.json` again.
+The active FCI runtime polygons currently target the daytime FCI footage and are generated from the hand-labeled `fci_day_slots.json` export. `fci_night_slots1.json` is kept as the completed night annotation source. If FCI is retaken from a different angle, regenerate `fci_slots.json` again.
 
 FAIE polygons currently cover the full displayed `B1-B40` layout.
 
@@ -101,7 +102,7 @@ Recommended capture conditions:
 ```text
 fixed tripod or stable mounting
 no camera movement after labeling starts
-daytime lighting
+daytime lighting or clear, stable night lighting
 high enough resolution for distant vehicles
 examples of both occupied and available slots
 minimal tree or pole obstruction where possible
@@ -149,7 +150,7 @@ truck
 Recommended frames:
 
 ```text
-FCI and FAIE daytime videos
+FCI and FAIE videos from the final capture conditions
 different occupancy levels
 small distant vehicles
 partial tree cover or shadows

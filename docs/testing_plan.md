@@ -63,9 +63,8 @@ http://127.0.0.1:8001/api/config
 Expected slot metadata:
 
 ```text
-FCI monitored slots: 79
+FCI monitored slots: 75
 FAIE monitored slots: 40
-FCI excludes A77
 ```
 
 Video metadata:
@@ -96,7 +95,7 @@ Expected:
 ```text
 JSON response includes source.type = video_snapshot
 source.frame_index matches the requested frame or the last valid frame
-total_slots is 79 for FCI and 40 for FAIE
+total_slots is 75 for FCI and 40 for FAIE
 available_count + occupied_count = total_slots
 ```
 

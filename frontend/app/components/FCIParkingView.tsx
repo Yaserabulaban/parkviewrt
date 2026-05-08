@@ -27,16 +27,14 @@ export default function FCIParkingView() {
   } = useParkingStatus('fci');
 
   const monitoredSlotIds = new Set(
-    Array.from({ length: 80 }, (_, index) => `A${index + 1}`).filter(
-      (slotId) => slotId !== 'A77'
-    )
+    Array.from({ length: 75 }, (_, index) => `A${index + 1}`)
   );
   const slotGroups = {
-    isolated: rangeSlots(1, 6),
-    upper: rangeSlots(7, 26),
-    middle: rangeSlots(27, 46),
-    lowerUpper: rangeSlots(47, 66),
-    lowerBottom: rangeSlots(67, 80),
+    isolated: rangeSlots(1, 4),
+    upper: rangeSlots(5, 22),
+    middle: rangeSlots(23, 41),
+    lowerUpper: rangeSlots(42, 61),
+    lowerBottom: rangeSlots(62, 75),
   };
 
   const slotsMap = new Map(

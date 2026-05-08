@@ -239,10 +239,11 @@ class ParkingOccupancyService:
             return json.load(slot_file)
 
     def _get_image_path(self, location_id: str) -> Path:
-        for extension in (".jpg", ".jpeg", ".png"):
-            image_path = IMAGES_DIR / f"{location_id}{extension}"
-            if image_path.exists():
-                return image_path
+        for image_name in (f"{location_id}_day", f"{location_id}_night", location_id):
+            for extension in (".jpg", ".jpeg", ".png"):
+                image_path = IMAGES_DIR / f"{image_name}{extension}"
+                if image_path.exists():
+                    return image_path
 
         raise FileNotFoundError(f"Parking image not found for location: {location_id}")
 
@@ -253,62 +254,90 @@ class ParkingOccupancyService:
         overlap_threshold: float,
         box_overlap_threshold: float,
     ) -> list[dict]:
-        occupancy_results = []
+        slot_geometries = [
+            {
+                "slot": slot,
+                "polygon": Polygon(slot["points"]),
+            }
+            for slot in slots
+        ]
+        occupancy_results = [
+            {
+                "slot_id": slot["slot_id"],
+                "occupied": False,
+                "overlap_ratio": 0,
+                "box_overlap_ratio": 0,
+                "detection_center_in_slot": False,
+                "slot_centroid_in_detection": False,
+                "occupied_reason": "none",
+            }
+            for slot in slots
+        ]
 
-        for slot in slots:
-            slot_polygon = Polygon(slot["points"])
-            slot_area = slot_polygon.area
-            best_overlap_ratio = 0
-            best_box_overlap_ratio = 0
-            detection_center_in_slot = False
-            slot_centroid_in_detection = False
-            occupied = False
-            occupied_reason = "none"
+        for detection in detections:
+            detection_box = box(*detection["bbox"])
+            detection_area = detection_box.area
+            if detection_area <= 0:
+                continue
 
-            if slot_area > 0:
-                for detection in detections:
-                    detection_box = box(*detection["bbox"])
-                    detection_area = detection_box.area
-                    detection_center = Point(detection_box.centroid.x, detection_box.centroid.y)
-                    intersection_area = slot_polygon.intersection(detection_box).area
-                    overlap_ratio = intersection_area / slot_area
-                    box_overlap_ratio = (
-                        intersection_area / detection_area if detection_area > 0 else 0
-                    )
-                    best_overlap_ratio = max(best_overlap_ratio, overlap_ratio)
-                    best_box_overlap_ratio = max(best_box_overlap_ratio, box_overlap_ratio)
-                    detection_center_in_slot = (
-                        detection_center_in_slot or slot_polygon.contains(detection_center)
-                    )
-                    slot_centroid_in_detection = (
-                        slot_centroid_in_detection
-                        or detection_box.contains(slot_polygon.centroid)
-                    )
+            detection_center = Point(detection_box.centroid.x, detection_box.centroid.y)
+            best_candidate = None
 
-                    if overlap_ratio >= overlap_threshold:
-                        occupied = True
-                        occupied_reason = "slot-overlap"
-                    elif box_overlap_ratio >= box_overlap_threshold:
-                        occupied = True
-                        occupied_reason = "box-overlap"
-                    elif slot_polygon.contains(detection_center):
-                        occupied = True
-                        occupied_reason = "detection-center"
-                    elif detection_box.contains(slot_polygon.centroid):
-                        occupied = True
-                        occupied_reason = "slot-centroid"
+            for index, slot_geometry in enumerate(slot_geometries):
+                slot_polygon = slot_geometry["polygon"]
+                slot_area = slot_polygon.area
+                if slot_area <= 0:
+                    continue
 
-            occupancy_results.append(
-                {
-                    "slot_id": slot["slot_id"],
-                    "occupied": occupied,
-                    "overlap_ratio": best_overlap_ratio,
-                    "box_overlap_ratio": best_box_overlap_ratio,
-                    "detection_center_in_slot": detection_center_in_slot,
-                    "slot_centroid_in_detection": slot_centroid_in_detection,
-                    "occupied_reason": occupied_reason,
-                }
-            )
+                intersection_area = slot_polygon.intersection(detection_box).area
+                overlap_ratio = intersection_area / slot_area
+                box_overlap_ratio = intersection_area / detection_area
+                detection_center_in_slot = slot_polygon.contains(detection_center)
+                slot_centroid_in_detection = detection_box.contains(slot_polygon.centroid)
+                slot_result = occupancy_results[index]
+                slot_result["overlap_ratio"] = max(
+                    slot_result["overlap_ratio"],
+                    overlap_ratio,
+                )
+                slot_result["box_overlap_ratio"] = max(
+                    slot_result["box_overlap_ratio"],
+                    box_overlap_ratio,
+                )
+                slot_result["detection_center_in_slot"] = (
+                    slot_result["detection_center_in_slot"] or detection_center_in_slot
+                )
+                slot_result["slot_centroid_in_detection"] = (
+                    slot_result["slot_centroid_in_detection"] or slot_centroid_in_detection
+                )
+
+                reason = None
+                score = 0
+                if detection_center_in_slot:
+                    reason = "detection-center"
+                    score = 3 + overlap_ratio
+                elif overlap_ratio >= overlap_threshold:
+                    reason = "slot-overlap"
+                    score = 2 + overlap_ratio
+                elif box_overlap_ratio >= box_overlap_threshold:
+                    reason = "box-overlap"
+                    score = 1 + box_overlap_ratio
+                elif slot_centroid_in_detection:
+                    reason = "slot-centroid"
+                    score = 0.5 + overlap_ratio
+
+                if reason and (
+                    best_candidate is None or score > best_candidate["score"]
+                ):
+                    best_candidate = {
+                        "index": index,
+                        "score": score,
+                        "reason": reason,
+                    }
+
+            if best_candidate is not None:
+                occupied_slot = occupancy_results[best_candidate["index"]]
+                occupied_slot["occupied"] = True
+                occupied_slot["occupied_reason"] = best_candidate["reason"]
 
         return occupancy_results
 

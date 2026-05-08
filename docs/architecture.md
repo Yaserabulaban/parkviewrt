@@ -23,7 +23,8 @@ backend/app/
   services/occupancy.py
   services/video_snapshot.py
   services/slot_layouts.py
-  tools/generate_video_slot_layouts.py
+  tools/generate_fci_day_slots.py
+  tools/generate_fci_night_slots.py
   tools/cache_video_status.py
   data/images/
   data/slots/
@@ -94,13 +95,11 @@ PARKVIEWRT_BOX_THRESHOLD
 ## Slot Coverage
 
 ```text
-FCI display slots: A1-A80
-FCI monitored slots: A1-A80 except A77
+FCI display slots: A1-A75
+FCI monitored slots: A1-A75
 FAIE display slots: B1-B40
 FAIE monitored slots: B1-B40
 ```
-
-`A77` is intentionally excluded because it is not a usable parking slot in the current FCI layout.
 
 ## Video and Cache Behavior
 

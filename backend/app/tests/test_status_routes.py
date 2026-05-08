@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.api.routes import status as status_routes
 from app.main import app
+from app.services.occupancy import ParkingOccupancyService
 
 
 class FakeOccupancyService:
@@ -205,14 +206,13 @@ def test_config_endpoint_returns_detection_settings():
     assert config["detection"]["slot_overlap_threshold"] == 0.3
     assert config["detection"]["box_overlap_threshold"] == 0.2
     assert config["slot_layouts"]["fci"]["monitored_slot_ids"][0] == "A1"
-    assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A80"
-    assert "A77" not in config["slot_layouts"]["fci"]["monitored_slot_ids"]
-    assert len(config["slot_layouts"]["fci"]["monitored_slot_ids"]) == 79
+    assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A75"
+    assert len(config["slot_layouts"]["fci"]["monitored_slot_ids"]) == 75
     assert config["slot_layouts"]["faie"]["monitored_slot_ids"][0] == "B1"
     assert config["slot_layouts"]["faie"]["monitored_slot_ids"][-1] == "B40"
     assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 40
     assert config["slot_layouts"]["fci"]["display_slot_ids"][0] == "A1"
-    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A80"
+    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A75"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][-1] == "B40"
 
@@ -411,3 +411,34 @@ def test_video_metadata_endpoint_returns_frame_details(monkeypatch):
         "fps": 30.0,
         "duration_seconds": 4.0,
     }
+
+
+def test_detection_claims_best_matching_slot_only():
+    service = ParkingOccupancyService.__new__(ParkingOccupancyService)
+    slots = [
+        {
+            "slot_id": "A1",
+            "points": [[0, 0], [10, 0], [10, 10], [0, 10]],
+        },
+        {
+            "slot_id": "A2",
+            "points": [[10, 0], [20, 0], [20, 10], [10, 10]],
+        },
+    ]
+    detections = [
+        {
+            "bbox": [2, 0, 15, 10],
+            "confidence": 0.9,
+            "class_name": "car",
+        }
+    ]
+
+    result = service._calculate_slot_occupancy(
+        slots,
+        detections,
+        overlap_threshold=0.3,
+        box_overlap_threshold=0.2,
+    )
+
+    assert result[0]["occupied"] is True
+    assert result[1]["occupied"] is False

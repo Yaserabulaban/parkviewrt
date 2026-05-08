@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { ArrowLeft, ExternalLink, Film, RefreshCw, Shuffle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, RefreshCw, Shuffle } from 'lucide-react';
 import ParkingSlot from '../components/ParkingSlot';
 import ParkingVideoPreview from '../components/ParkingVideoPreview';
 import logoImage from '@/assets/mmu-logo.png';
@@ -13,16 +13,12 @@ export default function FAIEParkingView() {
     data,
     loading,
     refreshing,
-    snapshotLoading,
-    sampleLoading,
     demoLoading,
     error,
     lastUpdated,
     statusMode,
     refetch,
     fetchDemoStatus,
-    fetchVideoSnapshot,
-    fetchVideoSamples,
     syncVideoFrame,
   } = useParkingStatus('faie');
 
@@ -83,12 +79,10 @@ export default function FAIEParkingView() {
   const statusSourceLabel =
     data?.source?.type === 'video_snapshot'
       ? `Video frame ${data.source.frame_index}`
-      : data?.source?.type === 'video_samples'
-        ? `Video samples (${data.source.sample_count} frames)`
-        : statusMode === 'demo'
+      : statusMode === 'demo'
           ? 'Demo random'
-        : 'Static image';
-  const busy = loading || refreshing || snapshotLoading || sampleLoading || demoLoading;
+          : 'Static image';
+  const busy = loading || refreshing || demoLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -121,30 +115,12 @@ export default function FAIEParkingView() {
               </Button>
 
               <Button
-                onClick={() => fetchVideoSnapshot(debugFrameIndex)}
-                disabled={busy}
-                variant="outline"
-              >
-                <Film className="mr-2 h-4 w-4" />
-                {snapshotLoading ? 'Sampling...' : 'Video Snapshot'}
-              </Button>
-
-              <Button
                 onClick={fetchDemoStatus}
                 disabled={busy}
                 variant="outline"
               >
                 <Shuffle className="mr-2 h-4 w-4" />
                 {demoLoading ? 'Shuffling...' : 'Demo Random'}
-              </Button>
-
-              <Button
-                onClick={() => fetchVideoSamples()}
-                disabled={busy}
-                variant="outline"
-              >
-                <Film className="mr-2 h-4 w-4" />
-                {sampleLoading ? 'Sampling...' : 'Video Samples'}
               </Button>
 
               <Button asChild variant="outline">

@@ -14,6 +14,8 @@ SLOTS_DIR = BASE_DIR / "data" / "slots"
 IMAGES_DIR = BASE_DIR / "data" / "images"
 OUTPUTS_DIR = BASE_DIR / "data" / "outputs"
 VALID_LOCATION_IDS = {"fci", "faie"}
+VALID_FCI_VARIANTS = {"day", "night"}
+DEFAULT_FCI_VARIANT = "day"
 
 
 class ParkingOccupancyService:
@@ -48,6 +50,7 @@ class ParkingOccupancyService:
     def get_status(
         self,
         location_id: str,
+        variant: str | None = None,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -55,6 +58,7 @@ class ParkingOccupancyService:
     ) -> dict:
         analysis = self._analyze_location(
             location_id,
+            variant=variant,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
             confidence_threshold=confidence_threshold,
@@ -66,6 +70,7 @@ class ParkingOccupancyService:
         self,
         location_id: str,
         frame,
+        variant: str | None = None,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -74,6 +79,7 @@ class ParkingOccupancyService:
         analysis = self._analyze_location(
             location_id,
             image_source=frame,
+            variant=variant,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
             confidence_threshold=confidence_threshold,
@@ -101,6 +107,7 @@ class ParkingOccupancyService:
     def create_debug_image(
         self,
         location_id: str,
+        variant: str | None = None,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -108,6 +115,7 @@ class ParkingOccupancyService:
     ) -> Path:
         analysis = self._analyze_location(
             location_id,
+            variant=variant,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
             confidence_threshold=confidence_threshold,
@@ -123,7 +131,10 @@ class ParkingOccupancyService:
         self._draw_summary(image, analysis)
 
         OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = OUTPUTS_DIR / f"{analysis['location_id']}_debug.jpg"
+        output_name = f"{analysis['location_id']}_debug.jpg"
+        if analysis["variant"]:
+            output_name = f"{analysis['location_id']}_{analysis['variant']}_debug.jpg"
+        output_path = OUTPUTS_DIR / output_name
         cv2.imwrite(str(output_path), image)
         return output_path
 
@@ -132,6 +143,7 @@ class ParkingOccupancyService:
         location_id: str,
         frame,
         output_suffix: str,
+        variant: str | None = None,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
@@ -140,6 +152,7 @@ class ParkingOccupancyService:
         analysis = self._analyze_location(
             location_id,
             image_source=frame,
+            variant=variant,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
             confidence_threshold=confidence_threshold,
@@ -161,12 +174,14 @@ class ParkingOccupancyService:
         self,
         location_id: str,
         image_source=None,
+        variant: str | None = None,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
         confidence_threshold: float | None = None,
         image_size: int | None = None,
     ) -> dict:
         normalized_location_id = location_id.lower()
+        normalized_variant = self._normalize_variant(normalized_location_id, variant)
         resolved_overlap_threshold = self._resolve_threshold(
             overlap_threshold,
             self.overlap_threshold,
@@ -183,8 +198,12 @@ class ParkingOccupancyService:
             "confidence threshold",
         )
         resolved_image_size = self._resolve_image_size(image_size)
-        slot_data = self._load_slots(normalized_location_id)
-        image_path = self._get_image_path(normalized_location_id) if image_source is None else None
+        slot_data = self._load_slots(normalized_location_id, normalized_variant)
+        image_path = (
+            self._get_image_path(normalized_location_id, normalized_variant)
+            if image_source is None
+            else None
+        )
         resolved_image_source = image_path if image_source is None else image_source
         detections = self.detector.detect_vehicles(
             resolved_image_source,
@@ -200,6 +219,7 @@ class ParkingOccupancyService:
 
         return {
             "location_id": slot_data.get("location_id", normalized_location_id),
+            "variant": normalized_variant,
             "slot_data": slot_data,
             "image_path": image_path,
             "detections": detections,
@@ -227,19 +247,41 @@ class ParkingOccupancyService:
             raise ValueError("image size must be between 320 and 2048")
         return resolved_image_size
 
-    def _load_slots(self, location_id: str) -> dict:
+    def _normalize_variant(self, location_id: str, variant: str | None) -> str | None:
         if location_id not in VALID_LOCATION_IDS:
             raise ValueError(f"Unknown location: {location_id}")
 
-        slot_path = SLOTS_DIR / f"{location_id}_slots.json"
+        if location_id != "fci":
+            if variant:
+                raise ValueError("video variants are supported for FCI only")
+            return None
+
+        normalized_variant = DEFAULT_FCI_VARIANT if variant is None else variant.lower()
+        if normalized_variant not in VALID_FCI_VARIANTS:
+            raise ValueError("variant must be either day or night")
+
+        return normalized_variant
+
+    def _load_slots(self, location_id: str, variant: str | None = None) -> dict:
+        normalized_variant = self._normalize_variant(location_id, variant)
+        if normalized_variant:
+            slot_path = SLOTS_DIR / f"{location_id}_{normalized_variant}_slots.json"
+        else:
+            slot_path = SLOTS_DIR / f"{location_id}_slots.json"
+
         if not slot_path.exists():
             raise FileNotFoundError(f"Slot file not found: {slot_path}")
 
         with slot_path.open("r", encoding="utf-8") as slot_file:
             return json.load(slot_file)
 
-    def _get_image_path(self, location_id: str) -> Path:
-        for image_name in (f"{location_id}_day", f"{location_id}_night", location_id):
+    def _get_image_path(self, location_id: str, variant: str | None = None) -> Path:
+        normalized_variant = self._normalize_variant(location_id, variant)
+        image_names = [location_id]
+        if normalized_variant:
+            image_names = [f"{location_id}_{normalized_variant}"]
+
+        for image_name in image_names:
             for extension in (".jpg", ".jpeg", ".png"):
                 image_path = IMAGES_DIR / f"{image_name}{extension}"
                 if image_path.exists():

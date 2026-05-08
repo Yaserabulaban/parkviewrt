@@ -8,15 +8,15 @@ The current application flow has moved to video-frame occupancy. Keep this repor
 
 ```text
 Input images: backend/app/data/images/fci_day.png, backend/app/data/images/faie.jpeg
-Slot labels: backend/app/data/slots/fci_slots.json, backend/app/data/slots/faie_slots.json
+Slot labels: backend/app/data/slots/fci_day_slots.json, backend/app/data/slots/faie_slots.json
 Detection classes in current backend: car, truck
 Confidence threshold: 0.20
 Image size: 1600
-Slot overlap threshold: 0.30
+Slot overlap threshold: 0.25
 Box overlap threshold: 0.20
 ```
 
-The original labelled static-image comparison used eight selected slots for each location, and those selected slots were treated as occupied for the comparison. The current runtime slot files are broader: FCI monitors 75 slots and FAIE monitors 40 slots.
+The original labelled static-image comparison used eight selected slots for each location, and those selected slots were treated as occupied for the comparison. The current runtime slot files are broader: FCI day monitors 75 slots, FCI night monitors 77 slots, and FAIE monitors 40 slots.
 
 ## Selected Model
 

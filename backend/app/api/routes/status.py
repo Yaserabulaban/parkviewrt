@@ -42,6 +42,7 @@ def get_backend_config():
 @router.get("/status/{location_id}", response_model=ParkingStatusResponse)
 def get_parking_status(
     location_id: str,
+    variant: str | None = None,
     threshold: float | None = None,
     box_threshold: float | None = None,
     confidence: float | None = None,
@@ -50,6 +51,7 @@ def get_parking_status(
     try:
         return occupancy_service.get_status(
             location_id,
+            variant=variant,
             overlap_threshold=threshold,
             box_overlap_threshold=box_threshold,
             confidence_threshold=confidence,
@@ -64,12 +66,14 @@ def get_parking_status(
 @router.get("/status/{location_id}/demo", response_model=ParkingStatusResponse)
 def get_demo_parking_status(
     location_id: str,
+    variant: str | None = None,
     occupancy_rate: float = 0.5,
     seed: int | None = None,
 ):
     try:
         return build_demo_parking_status(
             location_id,
+            variant=variant,
             occupancy_rate=occupancy_rate,
             seed=seed,
         )
@@ -80,6 +84,7 @@ def get_demo_parking_status(
 @router.get("/status/{location_id}/video-snapshot")
 def get_video_snapshot_status(
     location_id: str,
+    variant: str | None = None,
     frame_index: int = 0,
     debug: bool = False,
     use_cache: bool = True,
@@ -92,6 +97,7 @@ def get_video_snapshot_status(
     try:
         return video_snapshot_service.get_snapshot_status(
             location_id,
+            variant=variant,
             frame_index=frame_index,
             include_debug_image=debug,
             use_cache=use_cache,
@@ -110,6 +116,7 @@ def get_video_snapshot_status(
 @router.get("/status/{location_id}/video-samples")
 def get_video_sampled_status(
     location_id: str,
+    variant: str | None = None,
     sample_count: int = 5,
     start_frame: int = 0,
     frame_step: int = 30,
@@ -121,6 +128,7 @@ def get_video_sampled_status(
     try:
         return video_snapshot_service.get_sampled_status(
             location_id,
+            variant=variant,
             sample_count=sample_count,
             start_frame=start_frame,
             frame_step=frame_step,
@@ -136,17 +144,17 @@ def get_video_sampled_status(
 
 
 @router.get("/video/{location_id}/metadata")
-def get_parking_video_metadata(location_id: str):
+def get_parking_video_metadata(location_id: str, variant: str | None = None):
     try:
-        return video_snapshot_service.get_video_metadata(location_id)
+        return video_snapshot_service.get_video_metadata(location_id, variant=variant)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get("/video/{location_id}")
-def get_parking_video(location_id: str):
+def get_parking_video(location_id: str, variant: str | None = None):
     try:
-        video_path = video_snapshot_service.get_video_path(location_id)
+        video_path = video_snapshot_service.get_video_path(location_id, variant=variant)
         return FileResponse(
             video_path,
             media_type=VIDEO_MEDIA_TYPES.get(video_path.suffix.lower(), "application/octet-stream"),
@@ -164,6 +172,7 @@ def get_parking_video(location_id: str):
 def get_debug_visualization(
     location_id: str,
     source: str = "video",
+    variant: str | None = None,
     frame_index: int = 0,
     threshold: float | None = None,
     box_threshold: float | None = None,
@@ -174,6 +183,7 @@ def get_debug_visualization(
         if source == "static":
             image_path = occupancy_service.create_debug_image(
                 location_id,
+                variant=variant,
                 overlap_threshold=threshold,
                 box_overlap_threshold=box_threshold,
                 confidence_threshold=confidence,
@@ -183,13 +193,15 @@ def get_debug_visualization(
         elif source == "video":
             image_path = video_snapshot_service.create_debug_snapshot_image(
                 location_id,
+                variant=variant,
                 frame_index=frame_index,
                 overlap_threshold=threshold,
                 box_overlap_threshold=box_threshold,
                 confidence_threshold=confidence,
                 image_size=image_size,
             )
-            filename = f"{location_id.lower()}_video_frame_{frame_index}_debug.jpg"
+            variant_prefix = f"{variant}_" if variant else ""
+            filename = f"{location_id.lower()}_{variant_prefix}video_frame_{frame_index}_debug.jpg"
         else:
             raise ValueError("source must be either static or video")
 

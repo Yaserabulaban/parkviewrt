@@ -15,8 +15,16 @@ backend/app/data/images/faie.jpeg
 Tracked slot polygon files:
 
 ```text
-backend/app/data/slots/fci_slots.json
+backend/app/data/slots/fci_day_slots.json
+backend/app/data/slots/fci_night_slots.json
 backend/app/data/slots/faie_slots.json
+```
+
+Tracked FCI annotation source exports:
+
+```text
+backend/app/data/slots/fci_day_annotations.json
+backend/app/data/slots/fci_night_annotations.json
 ```
 
 Ignored local videos:
@@ -54,11 +62,12 @@ frontend/dist/
 ## Current Slot Coverage
 
 ```text
-FCI: A1-A75, 75 monitored slots
+FCI day: A1-A75, 75 monitored slots
+FCI night: A1-A77, 77 monitored slots
 FAIE: B1-B40, 40 monitored slots
 ```
 
-The active FCI runtime polygons currently target the daytime FCI footage and are generated from the hand-labeled `fci_day_slots.json` export. `fci_night_slots1.json` is kept as the completed night annotation source. If FCI is retaken from a different angle, regenerate `fci_slots.json` again.
+FCI runtime polygons are selected by video variant. `fci_day_slots.json` is generated from `fci_day_annotations.json`; `fci_night_slots.json` is generated from `fci_night_annotations.json`. If FCI is retaken from a different angle, regenerate the matching day or night runtime slot file.
 
 FAIE polygons currently cover the full displayed `B1-B40` layout.
 
@@ -84,7 +93,7 @@ Detection defaults:
 PARKVIEWRT_MODEL_PATH=backend/app/models/yolo11n.pt
 PARKVIEWRT_CONFIDENCE=0.20
 PARKVIEWRT_IMAGE_SIZE=1600
-PARKVIEWRT_SLOT_THRESHOLD=0.30
+PARKVIEWRT_SLOT_THRESHOLD=0.25
 PARKVIEWRT_BOX_THRESHOLD=0.20
 ```
 
@@ -121,11 +130,11 @@ local video -> current playback time -> frame_index -> YOLO -> slot polygons -> 
 Current backend endpoints:
 
 ```text
-GET /api/video/{location_id}/metadata
-GET /api/video/{location_id}
-GET /api/status/{location_id}/video-snapshot
-GET /api/status/{location_id}/video-samples
-GET /api/debug/{location_id}?source=video
+GET /api/video/{location_id}/metadata?variant=day
+GET /api/video/{location_id}?variant=day
+GET /api/status/{location_id}/video-snapshot?variant=day
+GET /api/status/{location_id}/video-samples?variant=day
+GET /api/debug/{location_id}?source=video&variant=day
 ```
 
 The frame status cache is generated under:

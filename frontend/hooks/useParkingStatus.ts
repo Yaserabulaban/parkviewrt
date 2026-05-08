@@ -4,13 +4,20 @@ import {
   getParkingVideoSamplesStatus,
   getParkingVideoSnapshotStatus,
 } from "../api/parkingApi";
-import type { ParkingStatusResponse, VideoSamplesResponse } from "../types/parking";
+import type {
+  ParkingStatusResponse,
+  ParkingVideoVariant,
+  VideoSamplesResponse,
+} from "../types/parking";
 
 type StatusMode = "demo" | "video_snapshot" | "video_samples";
 const DEFAULT_VIDEO_FRAME_INDEX = 0;
 const MIN_SYNC_FRAME_DISTANCE = 15;
 
-export function useParkingStatus(locationId: "fci" | "faie") {
+export function useParkingStatus(
+  locationId: "fci" | "faie",
+  variant?: ParkingVideoVariant
+) {
   const [data, setData] = useState<ParkingStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,7 +35,13 @@ export function useParkingStatus(locationId: "fci" | "faie") {
     try {
       setSnapshotLoading(true);
       setError(null);
-      const result = await getParkingVideoSnapshotStatus(locationId, frameIndex);
+      const result = await getParkingVideoSnapshotStatus(
+        locationId,
+        frameIndex,
+        true,
+        true,
+        variant
+      );
       setData(result);
       setStatusMode("video_snapshot");
       setLastUpdated(new Date());
@@ -40,7 +53,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       setSnapshotLoading(false);
       setRefreshing(false);
     }
-  }, [locationId]);
+  }, [locationId, variant]);
 
   const syncVideoFrame = useCallback(async (frameIndex: number) => {
     const normalizedFrameIndex = Math.max(0, Math.floor(frameIndex));
@@ -64,7 +77,8 @@ export function useParkingStatus(locationId: "fci" | "faie") {
         locationId,
         normalizedFrameIndex,
         true,
-        true
+        true,
+        variant
       );
       setData(result);
       setStatusMode("video_snapshot");
@@ -77,13 +91,13 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       setRefreshing(false);
       syncRequestInFlight.current = false;
     }
-  }, [locationId]);
+  }, [locationId, variant]);
 
   const fetchDemoStatus = useCallback(async () => {
     try {
       setDemoLoading(true);
       setError(null);
-      const result = await getParkingDemoStatus(locationId);
+      const result = await getParkingDemoStatus(locationId, variant);
       setData(result);
       setStatusMode("demo");
       setLastUpdated(new Date());
@@ -94,7 +108,7 @@ export function useParkingStatus(locationId: "fci" | "faie") {
       setLoading(false);
       setDemoLoading(false);
     }
-  }, [locationId]);
+  }, [locationId, variant]);
 
   const fetchVideoSamples = useCallback(
     async (sampleCount = 5, startFrame = 0, frameStep = 30) => {
@@ -105,7 +119,8 @@ export function useParkingStatus(locationId: "fci" | "faie") {
           locationId,
           sampleCount,
           startFrame,
-          frameStep
+          frameStep,
+          variant
         );
         setData(mapVideoSamplesToStatus(result));
         setStatusMode("video_samples");
@@ -118,12 +133,15 @@ export function useParkingStatus(locationId: "fci" | "faie") {
         setSampleLoading(false);
       }
     },
-    [locationId]
+    [locationId, variant]
   );
 
   useEffect(() => {
+    lastSyncedFrame.current = null;
+    hasLoaded.current = false;
+    setLoading(true);
     fetchVideoSnapshot(DEFAULT_VIDEO_FRAME_INDEX);
-  }, [fetchVideoSnapshot]);
+  }, [fetchVideoSnapshot, variant]);
 
   return {
     data,

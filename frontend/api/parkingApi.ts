@@ -1,14 +1,23 @@
 import { API_BASE_URL } from "../config/env";
 import type {
   ParkingStatusResponse,
+  ParkingVideoVariant,
   ParkingVideoMetadata,
   VideoSamplesResponse,
 } from "../types/parking";
 
 export async function getParkingDemoStatus(
-  locationId: "fci" | "faie"
+  locationId: "fci" | "faie",
+  variant?: ParkingVideoVariant
 ): Promise<ParkingStatusResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/status/${locationId}/demo`);
+  const params = new URLSearchParams();
+  if (variant) {
+    params.set("variant", variant);
+  }
+  const queryString = params.toString();
+  const response = await fetch(
+    `${API_BASE_URL}/api/status/${locationId}/demo${queryString ? `?${queryString}` : ""}`
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch demo parking status for ${locationId}`);
@@ -21,13 +30,17 @@ export async function getParkingVideoSnapshotStatus(
   locationId: "fci" | "faie",
   frameIndex = 0,
   useCache = true,
-  saveResult = true
+  saveResult = true,
+  variant?: ParkingVideoVariant
 ): Promise<ParkingStatusResponse> {
   const params = new URLSearchParams({
     frame_index: String(frameIndex),
     use_cache: String(useCache),
     save_result: String(saveResult),
   });
+  if (variant) {
+    params.set("variant", variant);
+  }
   const response = await fetch(
     `${API_BASE_URL}/api/status/${locationId}/video-snapshot?${params.toString()}`
   );
@@ -40,9 +53,17 @@ export async function getParkingVideoSnapshotStatus(
 }
 
 export async function getParkingVideoMetadata(
-  locationId: "fci" | "faie"
+  locationId: "fci" | "faie",
+  variant?: ParkingVideoVariant
 ): Promise<ParkingVideoMetadata> {
-  const response = await fetch(`${API_BASE_URL}/api/video/${locationId}/metadata`);
+  const params = new URLSearchParams();
+  if (variant) {
+    params.set("variant", variant);
+  }
+  const queryString = params.toString();
+  const response = await fetch(
+    `${API_BASE_URL}/api/video/${locationId}/metadata${queryString ? `?${queryString}` : ""}`
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch video metadata for ${locationId}`);
@@ -55,13 +76,17 @@ export async function getParkingVideoSamplesStatus(
   locationId: "fci" | "faie",
   sampleCount = 5,
   startFrame = 0,
-  frameStep = 30
+  frameStep = 30,
+  variant?: ParkingVideoVariant
 ): Promise<VideoSamplesResponse> {
   const params = new URLSearchParams({
     sample_count: String(sampleCount),
     start_frame: String(startFrame),
     frame_step: String(frameStep),
   });
+  if (variant) {
+    params.set("variant", variant);
+  }
   const response = await fetch(
     `${API_BASE_URL}/api/status/${locationId}/video-samples?${params.toString()}`
   );
@@ -76,16 +101,31 @@ export async function getParkingVideoSamplesStatus(
 export function getParkingDebugImageUrl(
   locationId: "fci" | "faie",
   frameIndex = 0,
-  source: "video" | "static" = "video"
+  source: "video" | "static" = "video",
+  variant?: ParkingVideoVariant
 ) {
   const params = new URLSearchParams({
     source,
     frame_index: String(frameIndex),
   });
+  if (variant) {
+    params.set("variant", variant);
+  }
   return `${API_BASE_URL}/api/debug/${locationId}?${params.toString()}`;
 }
 
-export function getParkingVideoUrl(locationId: "fci" | "faie", version?: string) {
-  const params = version ? `?v=${encodeURIComponent(version)}` : "";
-  return `${API_BASE_URL}/api/video/${locationId}${params}`;
+export function getParkingVideoUrl(
+  locationId: "fci" | "faie",
+  version?: string,
+  variant?: ParkingVideoVariant
+) {
+  const params = new URLSearchParams();
+  if (version) {
+    params.set("v", version);
+  }
+  if (variant) {
+    params.set("variant", variant);
+  }
+  const queryString = params.toString();
+  return `${API_BASE_URL}/api/video/${locationId}${queryString ? `?${queryString}` : ""}`;
 }

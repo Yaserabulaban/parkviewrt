@@ -1,4 +1,5 @@
 export type SlotStatus = "occupied" | "empty";
+export type ParkingVideoVariant = "day" | "night";
 
 export interface ParkingSlotDto {
   slot_id: string;
@@ -7,6 +8,7 @@ export interface ParkingSlotDto {
 
 export interface VideoSnapshotSource {
   type: "video_snapshot";
+  variant?: ParkingVideoVariant | null;
   video_path: string;
   frame_index: number;
   cached?: boolean;
@@ -15,6 +17,7 @@ export interface VideoSnapshotSource {
 
 export interface ParkingVideoMetadata {
   location_id: "fci" | "faie";
+  variant?: ParkingVideoVariant | null;
   video_path: string;
   file_name: string;
   file_size: number;
@@ -26,6 +29,7 @@ export interface ParkingVideoMetadata {
 
 export interface VideoSamplesSource {
   type: "video_samples";
+  variant?: ParkingVideoVariant | null;
   video_path: string;
   frame_count: number;
   fps: number;

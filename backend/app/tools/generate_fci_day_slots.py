@@ -4,8 +4,8 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SLOTS_DIR = BASE_DIR / "data" / "slots"
-ANNOTATION_PATH = SLOTS_DIR / "fci_day_slots.json"
-OUTPUT_PATH = SLOTS_DIR / "fci_slots.json"
+ANNOTATION_PATH = SLOTS_DIR / "fci_day_annotations.json"
+OUTPUT_PATH = SLOTS_DIR / "fci_day_slots.json"
 
 
 def annotation_points(annotation: dict) -> list[list[float]]:

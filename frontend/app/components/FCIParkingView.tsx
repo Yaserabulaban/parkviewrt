@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { ArrowLeft, ExternalLink, Film, RefreshCw, Shuffle } from 'lucide-react';
+import { useState } from 'react';
 import ParkingSlot from '../components/ParkingSlot';
 import ParkingVideoPreview from '../components/ParkingVideoPreview';
 import logoImage from '@/assets/mmu-logo.png';
@@ -9,6 +10,7 @@ import { getParkingDebugImageUrl } from '@/api/parkingApi';
 
 export default function FCIParkingView() {
   const navigate = useNavigate();
+  const [videoVariant, setVideoVariant] = useState<'day' | 'night'>('day');
   const {
     data,
     loading,
@@ -24,18 +26,13 @@ export default function FCIParkingView() {
     fetchVideoSnapshot,
     fetchVideoSamples,
     syncVideoFrame,
-  } = useParkingStatus('fci');
+  } = useParkingStatus('fci', videoVariant);
 
+  const variantLayout = fciVariantLayouts[videoVariant];
   const monitoredSlotIds = new Set(
-    Array.from({ length: 75 }, (_, index) => `A${index + 1}`)
+    Array.from({ length: variantLayout.totalSlots }, (_, index) => `A${index + 1}`)
   );
-  const slotGroups = {
-    isolated: rangeSlots(1, 4),
-    upper: rangeSlots(5, 22),
-    middle: rangeSlots(23, 41),
-    lowerUpper: rangeSlots(42, 61),
-    lowerBottom: rangeSlots(62, 75),
-  };
+  const slotGroups = variantLayout.slotGroups;
 
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
@@ -53,7 +50,12 @@ export default function FCIParkingView() {
   const debugFrameIndex = data?.source?.type === 'video_snapshot'
     ? data.source.frame_index
     : 0;
-  const debugImageUrl = getParkingDebugImageUrl('fci', debugFrameIndex);
+  const debugImageUrl = getParkingDebugImageUrl(
+    'fci',
+    debugFrameIndex,
+    'video',
+    videoVariant
+  );
   const statusSourceLabel =
     data?.source?.type === 'video_snapshot'
       ? `Video frame ${data.source.frame_index}`
@@ -73,17 +75,17 @@ export default function FCIParkingView() {
         isOccupied={slotsMap.get(id) ?? false}
         monitored={monitored}
         size="map"
-        className="h-14 w-10 shrink-0"
+        className="h-12 w-8 shrink-0 text-[11px]"
       />
     );
   };
   const renderSlotRow = (slotIds: string[], className = '') => (
-    <div className={`flex flex-nowrap gap-2 ${className}`}>
+    <div className={`flex flex-nowrap gap-1.5 ${className}`}>
       {slotIds.map(renderSlot)}
     </div>
   );
   const roadBand = (label: string) => (
-    <div className="relative flex h-14 items-center justify-center rounded bg-[#4f5554]">
+    <div className="relative flex h-12 items-center justify-center rounded bg-[#4f5554]">
       <div className="w-full border-t-2 border-dashed border-yellow-300/80" />
       <span className="absolute rounded bg-[#4f5554] px-4 py-1 text-xs font-semibold text-slate-100">
         {label}
@@ -91,14 +93,14 @@ export default function FCIParkingView() {
     </div>
   );
   const pavementBand = (
-    <div className="flex h-7 items-center justify-center rounded bg-[#8b938f] text-[10px] font-semibold uppercase tracking-wide text-slate-100">
+    <div className="flex h-6 items-center justify-center rounded bg-[#8b938f] text-[10px] font-semibold uppercase tracking-wide text-slate-100">
       Pavements
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-[1500px]">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <Button
@@ -115,6 +117,23 @@ export default function FCIParkingView() {
             </h1>
 
             <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex rounded-md border border-slate-300 bg-white p-1">
+                {(['day', 'night'] as const).map((variant) => (
+                  <button
+                    key={variant}
+                    type="button"
+                    onClick={() => setVideoVariant(variant)}
+                    className={`rounded px-3 py-2 text-sm font-semibold transition ${
+                      videoVariant === variant
+                        ? 'bg-slate-900 text-white'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {variant === 'day' ? 'Day' : 'Night'}
+                  </button>
+                ))}
+              </div>
+
               <Button
                 onClick={refetch}
                 disabled={busy}
@@ -192,16 +211,16 @@ export default function FCIParkingView() {
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 rounded-lg bg-white p-8 shadow-lg">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0 rounded-lg bg-white p-6 shadow-lg">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">
               Parking Layout - FCI Row Plan
             </h2>
 
-            <div className="overflow-x-auto">
-              <div className="mx-auto w-max rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="rounded-md bg-[#656b69] p-3">
+            <div className="overflow-hidden">
+              <div className="mx-auto w-full max-w-[900px] rounded-lg border border-slate-200 bg-[#747a78] p-4 shadow-inner">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="rounded-md bg-[#656b69] p-2.5">
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Top Left
                     </div>
@@ -213,15 +232,15 @@ export default function FCIParkingView() {
                   </div>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {roadBand('Top Drive Lane')}
 
-                  <div className="rounded-md bg-[#656b69] p-4">
+                  <div className="rounded-md bg-[#656b69] p-3">
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Main Left Line
                     </div>
                     {renderSlotRow(slotGroups.upper)}
-                    <div className="my-4">{pavementBand}</div>
+                    <div className="my-3">{pavementBand}</div>
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Main Right Line
                     </div>
@@ -230,12 +249,12 @@ export default function FCIParkingView() {
 
                   {roadBand('Middle Drive Lane')}
 
-                  <div className="rounded-md bg-[#656b69] p-4">
+                  <div className="rounded-md bg-[#656b69] p-3">
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Lower Left Line
                     </div>
                     {renderSlotRow(slotGroups.lowerUpper)}
-                    <div className="my-4">{pavementBand}</div>
+                    <div className="my-3">{pavementBand}</div>
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Lower Right Line
                     </div>
@@ -264,7 +283,8 @@ export default function FCIParkingView() {
 
           <ParkingVideoPreview
             locationId="fci"
-            title="FCI Day Footage"
+            variant={videoVariant}
+            title={`FCI ${videoVariant === 'day' ? 'Day' : 'Night'} Footage`}
             onFrameChange={syncVideoFrame}
           />
         </div>
@@ -276,3 +296,26 @@ export default function FCIParkingView() {
 function rangeSlots(start: number, end: number) {
   return Array.from({ length: end - start + 1 }, (_, index) => `A${start + index}`);
 }
+
+const fciVariantLayouts = {
+  day: {
+    totalSlots: 75,
+    slotGroups: {
+      isolated: rangeSlots(1, 4),
+      upper: rangeSlots(5, 22),
+      middle: rangeSlots(23, 41),
+      lowerUpper: rangeSlots(42, 61),
+      lowerBottom: rangeSlots(62, 75),
+    },
+  },
+  night: {
+    totalSlots: 77,
+    slotGroups: {
+      isolated: rangeSlots(1, 6),
+      upper: rangeSlots(7, 26),
+      middle: rangeSlots(27, 50),
+      lowerUpper: rangeSlots(51, 65),
+      lowerBottom: rangeSlots(66, 77),
+    },
+  },
+};

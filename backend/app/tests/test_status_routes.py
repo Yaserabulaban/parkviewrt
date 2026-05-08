@@ -14,6 +14,7 @@ class FakeOccupancyService:
     def get_status(
         self,
         location_id,
+        variant=None,
         overlap_threshold=None,
         box_overlap_threshold=None,
         confidence_threshold=None,
@@ -36,6 +37,7 @@ class FakeOccupancyService:
     def create_debug_image(
         self,
         location_id,
+        variant=None,
         overlap_threshold=None,
         box_overlap_threshold=None,
         confidence_threshold=None,
@@ -53,6 +55,7 @@ class FakeVideoSnapshotService:
     def get_snapshot_status(
         self,
         location_id,
+        variant=None,
         frame_index=0,
         include_debug_image=False,
         use_cache=True,
@@ -73,6 +76,7 @@ class FakeVideoSnapshotService:
             "slots": [{"slot_id": "A1", "occupied": True}],
             "source": {
                 "type": "video_snapshot",
+                "variant": variant,
                 "video_path": "dummy.mp4",
                 "frame_index": frame_index,
                 "cached": use_cache,
@@ -86,6 +90,7 @@ class FakeVideoSnapshotService:
     def get_sampled_status(
         self,
         location_id,
+        variant=None,
         sample_count=5,
         start_frame=0,
         frame_step=30,
@@ -101,6 +106,7 @@ class FakeVideoSnapshotService:
             "location_id": location_id,
             "source": {
                 "type": "video_samples",
+                "variant": variant,
                 "video_path": "dummy.mp4",
                 "frame_count": 120,
                 "fps": 30.0,
@@ -137,7 +143,7 @@ class FakeVideoSnapshotService:
             ],
         }
 
-    def get_video_path(self, location_id):
+    def get_video_path(self, location_id, variant=None):
         if location_id not in {"fci", "faie"}:
             raise FileNotFoundError(f"No video found for location: {location_id}")
 
@@ -145,12 +151,13 @@ class FakeVideoSnapshotService:
         video_path.write_bytes(b"video")
         return video_path
 
-    def get_video_metadata(self, location_id):
+    def get_video_metadata(self, location_id, variant=None):
         if location_id not in {"fci", "faie"}:
             raise FileNotFoundError(f"No video found for location: {location_id}")
 
         return {
             "location_id": location_id,
+            "variant": variant,
             "video_path": "dummy.mp4",
             "file_name": "dummy.mp4",
             "file_size": 5,
@@ -163,6 +170,7 @@ class FakeVideoSnapshotService:
     def create_debug_snapshot_image(
         self,
         location_id,
+        variant=None,
         frame_index=0,
         overlap_threshold=None,
         box_overlap_threshold=None,
@@ -203,7 +211,7 @@ def test_config_endpoint_returns_detection_settings():
     assert model_path.endswith("backend/app/models/yolo11n.pt")
     assert config["detection"]["confidence_threshold"] == 0.2
     assert config["detection"]["image_size"] == 1600
-    assert config["detection"]["slot_overlap_threshold"] == 0.3
+    assert config["detection"]["slot_overlap_threshold"] == 0.25
     assert config["detection"]["box_overlap_threshold"] == 0.2
     assert config["slot_layouts"]["fci"]["monitored_slot_ids"][0] == "A1"
     assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A75"
@@ -213,6 +221,9 @@ def test_config_endpoint_returns_detection_settings():
     assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 40
     assert config["slot_layouts"]["fci"]["display_slot_ids"][0] == "A1"
     assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A75"
+    assert config["slot_layouts"]["fci"]["default_variant"] == "day"
+    assert config["slot_layouts"]["fci"]["variants"]["day"]["monitored_slot_ids"][-1] == "A75"
+    assert config["slot_layouts"]["fci"]["variants"]["night"]["monitored_slot_ids"][-1] == "A77"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][-1] == "B40"
 
@@ -282,6 +293,21 @@ def test_demo_status_endpoint_returns_all_display_slots():
     assert data["slots"][-1]["slot_id"] == "B40"
 
 
+def test_fci_demo_status_endpoint_accepts_night_variant():
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/fci/demo",
+        params={"variant": "night", "occupancy_rate": 0.5, "seed": 7},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_id"] == "fci"
+    assert data["total_slots"] == 77
+    assert data["slots"][-1]["slot_id"] == "A77"
+
+
 def test_demo_status_endpoint_rejects_invalid_occupancy_rate():
     client = TestClient(app)
 
@@ -325,6 +351,7 @@ def test_video_snapshot_endpoint_returns_status(monkeypatch):
     assert response.status_code == 200
     assert response.json()["source"] == {
         "type": "video_snapshot",
+        "variant": None,
         "video_path": "dummy.mp4",
         "frame_index": 3,
         "cached": True,
@@ -403,6 +430,7 @@ def test_video_metadata_endpoint_returns_frame_details(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {
         "location_id": "fci",
+        "variant": None,
         "video_path": "dummy.mp4",
         "file_name": "dummy.mp4",
         "file_size": 5,
@@ -411,6 +439,20 @@ def test_video_metadata_endpoint_returns_frame_details(monkeypatch):
         "fps": 30.0,
         "duration_seconds": 4.0,
     }
+
+
+def test_fci_video_variant_is_forwarded(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/fci/video-snapshot",
+        params={"variant": "night", "frame_index": 9},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["source"]["variant"] == "night"
+    assert response.json()["source"]["frame_index"] == 9
 
 
 def test_detection_claims_best_matching_slot_only():

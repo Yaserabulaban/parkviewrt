@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { getParkingVideoMetadata, getParkingVideoUrl } from '@/api/parkingApi';
-import type { ParkingVideoMetadata } from '@/types/parking';
+import type { ParkingVideoMetadata, ParkingVideoVariant } from '@/types/parking';
 
 interface ParkingVideoPreviewProps {
   locationId: 'fci' | 'faie';
   title: string;
+  variant?: ParkingVideoVariant;
   onFrameChange?: (frameIndex: number) => void;
 }
 
 export default function ParkingVideoPreview({
   locationId,
   title,
+  variant,
   onFrameChange,
 }: ParkingVideoPreviewProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -23,7 +25,7 @@ export default function ParkingVideoPreview({
   useEffect(() => {
     let active = true;
 
-    getParkingVideoMetadata(locationId)
+    getParkingVideoMetadata(locationId, variant)
       .then((result) => {
         if (active) {
           setMetadata(result);
@@ -39,7 +41,7 @@ export default function ParkingVideoPreview({
     return () => {
       active = false;
     };
-  }, [locationId]);
+  }, [locationId, variant]);
 
   useEffect(() => {
     if (!metadata || !onFrameChange) {
@@ -68,6 +70,7 @@ export default function ParkingVideoPreview({
       </div>
 
       <video
+        key={`${locationId}-${variant ?? 'default'}-${videoVersion ?? 'loading'}`}
         ref={videoRef}
         className="aspect-video w-full rounded-md bg-black object-cover"
         controls
@@ -75,7 +78,7 @@ export default function ParkingVideoPreview({
         loop
         playsInline
         preload="metadata"
-        src={getParkingVideoUrl(locationId, videoVersion)}
+        src={getParkingVideoUrl(locationId, videoVersion, variant)}
       />
 
       <div className="mt-3 text-xs text-slate-600">

@@ -31,16 +31,17 @@ backend/app/data/videos/faie/
 Recommended filenames:
 
 ```text
-fci_video.mov
+fci/day/fci_video.mov
+fci/night/fci_video.mov
 faie_video.mov
 ```
 
-The backend selects the first supported video file in each location folder. Supported extensions are `.mp4`, `.avi`, `.mov`, and `.mkv`.
+For FCI, the dashboard sends `variant=day` or `variant=night`; the backend prefers videos under the matching variant folder. Supported extensions are `.mp4`, `.avi`, `.mov`, and `.mkv`.
 
 After replacing a video with the same filename, clear generated frame status cache if needed:
 
 ```powershell
-Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/fci/fci_video
+Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/fci
 Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/faie/faie_video
 ```
 
@@ -63,14 +64,16 @@ http://127.0.0.1:8001/api/config
 Expected slot metadata:
 
 ```text
-FCI monitored slots: 75
+FCI day monitored slots: 75
+FCI night monitored slots: 77
 FAIE monitored slots: 40
 ```
 
 Video metadata:
 
 ```text
-http://127.0.0.1:8001/api/video/fci/metadata
+http://127.0.0.1:8001/api/video/fci/metadata?variant=day
+http://127.0.0.1:8001/api/video/fci/metadata?variant=night
 http://127.0.0.1:8001/api/video/faie/metadata
 ```
 
@@ -86,7 +89,8 @@ file_size and last_modified are present
 Video snapshot:
 
 ```text
-http://127.0.0.1:8001/api/status/fci/video-snapshot?frame_index=0&use_cache=false
+http://127.0.0.1:8001/api/status/fci/video-snapshot?variant=day&frame_index=0&use_cache=false
+http://127.0.0.1:8001/api/status/fci/video-snapshot?variant=night&frame_index=0&use_cache=false
 http://127.0.0.1:8001/api/status/faie/video-snapshot?frame_index=0&use_cache=false
 ```
 
@@ -95,14 +99,15 @@ Expected:
 ```text
 JSON response includes source.type = video_snapshot
 source.frame_index matches the requested frame or the last valid frame
-total_slots is 75 for FCI and 40 for FAIE
+total_slots is 75 for FCI day, 77 for FCI night, and 40 for FAIE
 available_count + occupied_count = total_slots
 ```
 
 Video debug:
 
 ```text
-http://127.0.0.1:8001/api/debug/fci?source=video&frame_index=0
+http://127.0.0.1:8001/api/debug/fci?source=video&variant=day&frame_index=0
+http://127.0.0.1:8001/api/debug/fci?source=video&variant=night&frame_index=0
 http://127.0.0.1:8001/api/debug/faie?source=video&frame_index=0
 ```
 
@@ -119,7 +124,7 @@ slot polygons align with the current video camera angle
 Multi-frame samples:
 
 ```text
-http://127.0.0.1:8001/api/status/fci/video-samples?sample_count=5&start_frame=0&frame_step=30
+http://127.0.0.1:8001/api/status/fci/video-samples?variant=day&sample_count=5&start_frame=0&frame_step=30
 ```
 
 Expected:

@@ -92,7 +92,7 @@ def get_settings() -> AppSettings:
         ),
         image_size=_validate_image_size(_env_int("PARKVIEWRT_IMAGE_SIZE", 1600)),
         slot_overlap_threshold=_validate_unit_interval(
-            _env_float("PARKVIEWRT_SLOT_THRESHOLD", 0.30),
+            _env_float("PARKVIEWRT_SLOT_THRESHOLD", 0.25),
             "PARKVIEWRT_SLOT_THRESHOLD",
         ),
         box_overlap_threshold=_validate_unit_interval(

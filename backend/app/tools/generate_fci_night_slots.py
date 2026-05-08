@@ -4,8 +4,8 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SLOTS_DIR = BASE_DIR / "data" / "slots"
-ANNOTATION_PATH = SLOTS_DIR / "fci_night_slots1.json"
-OUTPUT_PATH = SLOTS_DIR / "fci_slots.json"
+ANNOTATION_PATH = SLOTS_DIR / "fci_night_annotations.json"
+OUTPUT_PATH = SLOTS_DIR / "fci_night_slots.json"
 
 # Label Studio exports annotations by creation order. This order maps those
 # hand-drawn polygons into the parking-row order used by the dashboard.

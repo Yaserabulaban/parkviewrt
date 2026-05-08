@@ -42,14 +42,25 @@ Example response:
     "model_path": "backend/app/models/yolo11n.pt",
     "confidence_threshold": 0.2,
     "image_size": 1600,
-    "slot_overlap_threshold": 0.3,
+    "slot_overlap_threshold": 0.25,
     "box_overlap_threshold": 0.2
   },
   "locations": ["fci", "faie"],
   "slot_layouts": {
     "fci": {
       "display_slot_ids": ["A1", "A2"],
-      "monitored_slot_ids": ["A1", "A2"]
+      "monitored_slot_ids": ["A1", "A2"],
+      "default_variant": "day",
+      "variants": {
+        "day": {
+          "display_slot_ids": ["A1", "A2"],
+          "monitored_slot_ids": ["A1", "A2"]
+        },
+        "night": {
+          "display_slot_ids": ["A1", "A2"],
+          "monitored_slot_ids": ["A1", "A2"]
+        }
+      }
     }
   }
 }
@@ -73,10 +84,11 @@ Purpose: run YOLO on the static reference image and compare detections with slot
 Optional query parameters:
 
 ```text
-threshold      Slot polygon overlap threshold. Default: 0.30
+threshold      Slot polygon overlap threshold. Default: 0.25
 box_threshold  Detection-box overlap threshold. Default: 0.20
 confidence     YOLO confidence threshold. Default: 0.20
 image_size     YOLO inference image size. Default: 1600
+variant        FCI only: day or night. Default: day
 ```
 
 Example response:
@@ -84,8 +96,8 @@ Example response:
 ```json
 {
   "location_id": "fci",
-  "total_slots": 79,
-  "occupied_count": 65,
+  "total_slots": 75,
+  "occupied_count": 61,
   "available_count": 14,
   "slots": [
     { "slot_id": "A1", "occupied": true },
@@ -107,12 +119,14 @@ Optional query parameters:
 ```text
 occupancy_rate  Occupied probability per slot. Default: 0.5
 seed            Optional integer for repeatable output
+variant         FCI only: day or night. Default: day
 ```
 
 Example:
 
 ```text
 GET /api/status/fci/demo?occupancy_rate=0.6&seed=7
+GET /api/status/fci/demo?variant=night&occupancy_rate=0.6&seed=7
 ```
 
 ## Video Metadata
@@ -123,11 +137,18 @@ GET /api/video/{location_id}/metadata
 
 Purpose: return the selected local video details used by the frontend for playback sync and cache busting.
 
+Optional query parameters:
+
+```text
+variant        FCI only: day or night. Default: day
+```
+
 Example response:
 
 ```json
 {
   "location_id": "fci",
+  "variant": "day",
   "video_path": "backend/app/data/videos/fci/fci_video.mov",
   "file_name": "fci_video.mov",
   "file_size": 668794432,
@@ -145,6 +166,12 @@ GET /api/video/{location_id}
 ```
 
 Purpose: serve the selected local video to the dashboard. The response uses no-cache headers so replacing a video with the same filename is reflected in the browser.
+
+Optional query parameters:
+
+```text
+variant        FCI only: day or night. Default: day
+```
 
 Supported video extensions:
 
@@ -174,12 +201,14 @@ threshold       Slot polygon overlap threshold. Default: configured backend valu
 box_threshold   Detection-box overlap threshold. Default: configured backend value
 confidence      YOLO confidence threshold. Default: configured backend value
 image_size      YOLO inference image size. Default: configured backend value
+variant         FCI only: day or night. Default: day
 ```
 
 Example:
 
 ```text
 GET /api/status/fci/video-snapshot?frame_index=300&use_cache=false
+GET /api/status/fci/video-snapshot?variant=night&frame_index=300
 ```
 
 Example response:
@@ -187,14 +216,15 @@ Example response:
 ```json
 {
   "location_id": "fci",
-  "total_slots": 79,
-  "occupied_count": 65,
+  "total_slots": 75,
+  "occupied_count": 61,
   "available_count": 14,
   "slots": [
     { "slot_id": "A1", "occupied": true }
   ],
   "source": {
     "type": "video_snapshot",
+    "variant": "day",
     "video_path": "backend/app/data/videos/fci/fci_video.mov",
     "frame_index": 300,
     "cached": false
@@ -220,6 +250,7 @@ threshold       Slot polygon overlap threshold
 box_threshold   Detection-box overlap threshold
 confidence      YOLO confidence threshold
 image_size      YOLO inference image size
+variant         FCI only: day or night. Default: day
 ```
 
 Example:
@@ -245,12 +276,14 @@ threshold
 box_threshold
 confidence
 image_size
+variant         FCI only: day or night. Default: day
 ```
 
 Examples:
 
 ```text
 GET /api/debug/fci?source=video&frame_index=300
+GET /api/debug/fci?source=video&variant=night&frame_index=300
 GET /api/debug/faie?source=static
 ```
 

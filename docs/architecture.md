@@ -45,10 +45,12 @@ frontend/
 2. `ParkingVideoPreview` requests `/api/video/{location_id}/metadata`, then plays `/api/video/{location_id}`.
 3. The frontend converts the current video timestamp to a frame index using the reported FPS.
 4. `useParkingStatus` requests `/api/status/{location_id}/video-snapshot?frame_index=...`.
+   For FCI, the dashboard also sends `variant=day` or `variant=night`.
 5. `VideoSnapshotService` reads the requested frame from the selected local video.
 6. `ParkingOccupancyService` runs YOLO on that frame.
 7. The detector keeps vehicle classes `car` and `truck`.
 8. Vehicle boxes are compared with slot polygons loaded from `backend/app/data/slots/{location_id}_slots.json`.
+   For FCI variants, the backend loads `fci_day_slots.json` or `fci_night_slots.json`.
 9. The backend returns occupied/free slot status, counts, source metadata, and cache state.
 10. The frontend updates the visual parking layout.
 
@@ -75,7 +77,7 @@ slot centroid inside detection box
 Current defaults:
 
 ```text
-threshold = 0.30
+threshold = 0.25
 box_threshold = 0.20
 confidence = 0.20
 image_size = 1600
@@ -95,8 +97,8 @@ PARKVIEWRT_BOX_THRESHOLD
 ## Slot Coverage
 
 ```text
-FCI display slots: A1-A75
-FCI monitored slots: A1-A75
+FCI day display/monitored slots: A1-A75
+FCI night display/monitored slots: A1-A77
 FAIE display slots: B1-B40
 FAIE monitored slots: B1-B40
 ```
@@ -118,7 +120,7 @@ Supported extensions:
 .mkv
 ```
 
-The backend serves videos through `/api/video/{location_id}` with no-cache headers. The frontend also appends a version token based on file size and last modified time so replacing a video with the same filename refreshes correctly in the browser.
+The backend serves videos through `/api/video/{location_id}` with no-cache headers. FCI accepts `variant=day` and `variant=night`; the selected variant also chooses the matching slot polygon file. The frontend appends a version token based on file size and last modified time so replacing a video with the same filename refreshes correctly in the browser.
 
 Frame status results are saved under:
 
@@ -133,7 +135,7 @@ This cache is generated data and is ignored by Git. Clear the matching location/
 `/api/debug/{location_id}` returns a JPEG overlay. By default it draws the requested video frame:
 
 ```text
-GET /api/debug/fci?source=video&frame_index=0
+GET /api/debug/fci?source=video&variant=day&frame_index=0
 ```
 
 Static image debug is still available:

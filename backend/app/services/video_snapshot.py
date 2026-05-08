@@ -18,6 +18,7 @@ class VideoSnapshotService:
     def get_snapshot_status(
         self,
         location_id: str,
+        variant: str | None = None,
         frame_index: int = 0,
         include_debug_image: bool = False,
         use_cache: bool = True,
@@ -31,9 +32,14 @@ class VideoSnapshotService:
             raise ValueError("frame_index must be 0 or greater")
 
         normalized_location_id = location_id.lower()
-        video_path = self._find_video_path(normalized_location_id)
+        normalized_variant = self.occupancy_service._normalize_variant(
+            normalized_location_id,
+            variant,
+        )
+        video_path = self._find_video_path(normalized_location_id, normalized_variant)
         cache_path = self._get_status_cache_path(
             normalized_location_id,
+            normalized_variant,
             video_path,
             frame_index,
             overlap_threshold=overlap_threshold,
@@ -48,6 +54,7 @@ class VideoSnapshotService:
         status = self.occupancy_service.get_frame_status(
             normalized_location_id,
             frame,
+            variant=normalized_variant,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
             confidence_threshold=confidence_threshold,
@@ -55,6 +62,7 @@ class VideoSnapshotService:
         )
         status["source"] = {
             "type": "video_snapshot",
+            "variant": normalized_variant,
             "video_path": str(video_path),
             "frame_index": actual_frame_index,
             "cached": False,
@@ -64,6 +72,7 @@ class VideoSnapshotService:
                 normalized_location_id,
                 frame,
                 output_suffix=f"video_frame_{actual_frame_index}",
+                variant=normalized_variant,
                 overlap_threshold=overlap_threshold,
                 box_overlap_threshold=box_overlap_threshold,
                 confidence_threshold=confidence_threshold,
@@ -74,6 +83,7 @@ class VideoSnapshotService:
         if save_result:
             cache_path = self._get_status_cache_path(
                 normalized_location_id,
+                normalized_variant,
                 video_path,
                 actual_frame_index,
                 overlap_threshold=overlap_threshold,
@@ -85,12 +95,21 @@ class VideoSnapshotService:
 
         return status
 
-    def get_video_path(self, location_id: str) -> Path:
-        return self._find_video_path(location_id.lower())
-
-    def get_video_metadata(self, location_id: str) -> dict:
+    def get_video_path(self, location_id: str, variant: str | None = None) -> Path:
         normalized_location_id = location_id.lower()
-        video_path = self._find_video_path(normalized_location_id)
+        normalized_variant = self.occupancy_service._normalize_variant(
+            normalized_location_id,
+            variant,
+        )
+        return self._find_video_path(normalized_location_id, normalized_variant)
+
+    def get_video_metadata(self, location_id: str, variant: str | None = None) -> dict:
+        normalized_location_id = location_id.lower()
+        normalized_variant = self.occupancy_service._normalize_variant(
+            normalized_location_id,
+            variant,
+        )
+        video_path = self._find_video_path(normalized_location_id, normalized_variant)
         metadata = self._get_video_metadata(video_path)
         fps = metadata["fps"]
         frame_count = metadata["frame_count"]
@@ -98,6 +117,7 @@ class VideoSnapshotService:
 
         return {
             "location_id": normalized_location_id,
+            "variant": normalized_variant,
             "video_path": str(video_path),
             "file_name": video_path.name,
             "file_size": video_path.stat().st_size,
@@ -110,6 +130,7 @@ class VideoSnapshotService:
     def create_debug_snapshot_image(
         self,
         location_id: str,
+        variant: str | None = None,
         frame_index: int = 0,
         overlap_threshold: float | None = None,
         box_overlap_threshold: float | None = None,
@@ -120,12 +141,19 @@ class VideoSnapshotService:
             raise ValueError("frame_index must be 0 or greater")
 
         normalized_location_id = location_id.lower()
-        video_path = self._find_video_path(normalized_location_id)
+        normalized_variant = self.occupancy_service._normalize_variant(
+            normalized_location_id,
+            variant,
+        )
+        video_path = self._find_video_path(normalized_location_id, normalized_variant)
         frame, actual_frame_index = self._read_frame(video_path, frame_index)
         return self.occupancy_service.create_debug_frame_image(
             normalized_location_id,
             frame,
-            output_suffix=f"video_frame_{actual_frame_index}",
+            output_suffix=f"{normalized_variant}_video_frame_{actual_frame_index}"
+            if normalized_variant
+            else f"video_frame_{actual_frame_index}",
+            variant=normalized_variant,
             overlap_threshold=overlap_threshold,
             box_overlap_threshold=box_overlap_threshold,
             confidence_threshold=confidence_threshold,
@@ -135,6 +163,7 @@ class VideoSnapshotService:
     def get_sampled_status(
         self,
         location_id: str,
+        variant: str | None = None,
         sample_count: int = 5,
         start_frame: int = 0,
         frame_step: int = 30,
@@ -151,7 +180,11 @@ class VideoSnapshotService:
             raise ValueError("frame_step must be 1 or greater")
 
         normalized_location_id = location_id.lower()
-        video_path = self._find_video_path(normalized_location_id)
+        normalized_variant = self.occupancy_service._normalize_variant(
+            normalized_location_id,
+            variant,
+        )
+        video_path = self._find_video_path(normalized_location_id, normalized_variant)
         metadata = self._get_video_metadata(video_path)
         frame_indices = self._build_sample_indices(
             frame_count=metadata["frame_count"],
@@ -161,6 +194,7 @@ class VideoSnapshotService:
         )
         samples = self._process_frames(
             location_id=normalized_location_id,
+            variant=normalized_variant,
             video_path=video_path,
             frame_indices=frame_indices,
             overlap_threshold=overlap_threshold,
@@ -173,6 +207,7 @@ class VideoSnapshotService:
             "location_id": normalized_location_id,
             "source": {
                 "type": "video_samples",
+                "variant": normalized_variant,
                 "video_path": str(video_path),
                 "frame_count": metadata["frame_count"],
                 "fps": metadata["fps"],
@@ -185,9 +220,39 @@ class VideoSnapshotService:
             "samples": samples,
         }
 
-    def _find_video_path(self, location_id: str) -> Path:
+    def _find_video_path(self, location_id: str, variant: str | None = None) -> Path:
         location_dir = VIDEOS_DIR / location_id
         candidates = []
+
+        if variant:
+            variant_dir = location_dir / variant
+            if variant_dir.exists():
+                for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                    candidates.extend(sorted(variant_dir.glob(f"*{extension}")))
+
+            if location_dir.exists():
+                for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                    candidates.extend(sorted(location_dir.glob(f"*{variant}*{extension}")))
+
+            for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                candidates.extend(sorted(VIDEOS_DIR.glob(f"{location_id}_{variant}*{extension}")))
+                archive_dir = VIDEOS_DIR / "archive"
+                if archive_dir.exists():
+                    candidates.extend(
+                        sorted(archive_dir.glob(f"{location_id}_*{variant}*{extension}"))
+                    )
+
+            if variant == "day" and location_dir.exists():
+                for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                    candidates.extend(sorted(location_dir.glob(f"{location_id}_video{extension}")))
+                    candidates.extend(sorted(location_dir.glob(f"video{extension}")))
+
+            if candidates:
+                return candidates[0]
+
+            raise FileNotFoundError(
+                f"No {variant} video found for location: {location_id}"
+            )
 
         if location_dir.exists():
             for extension in SUPPORTED_VIDEO_EXTENSIONS:
@@ -205,6 +270,7 @@ class VideoSnapshotService:
     def _get_status_cache_path(
         self,
         location_id: str,
+        variant: str | None,
         video_path: Path,
         frame_index: int,
         overlap_threshold: float | None,
@@ -212,24 +278,42 @@ class VideoSnapshotService:
         confidence_threshold: float | None,
         image_size: int | None,
     ) -> Path:
+        slot_cache_value = self._cache_value(
+            overlap_threshold,
+            self.occupancy_service.overlap_threshold,
+        )
+        box_cache_value = self._cache_value(
+            box_overlap_threshold,
+            self.occupancy_service.box_overlap_threshold,
+        )
+        confidence_cache_value = self._cache_value(
+            confidence_threshold,
+            self.occupancy_service.confidence_threshold,
+        )
+        image_size_cache_value = self._cache_value(
+            image_size,
+            self.occupancy_service.image_size,
+        )
         tuning_key = "_".join(
             [
-                f"s{self._cache_value(overlap_threshold)}",
-                f"b{self._cache_value(box_overlap_threshold)}",
-                f"c{self._cache_value(confidence_threshold)}",
-                f"i{self._cache_value(image_size)}",
+                f"s{slot_cache_value}",
+                f"b{box_cache_value}",
+                f"c{confidence_cache_value}",
+                f"i{image_size_cache_value}",
             ]
         )
         return (
             VIDEO_STATUS_CACHE_DIR
             / location_id
+            / (variant or "default")
             / video_path.stem
             / tuning_key
             / f"frame_{frame_index}.json"
         )
 
-    def _cache_value(self, value) -> str:
-        return "default" if value is None else str(value).replace(".", "p")
+    def _cache_value(self, value, default_value) -> str:
+        resolved_value = default_value if value is None else value
+        return str(resolved_value).replace(".", "p")
 
     def _read_cached_status(self, cache_path: Path) -> dict:
         with cache_path.open("r", encoding="utf-8") as cache_file:
@@ -307,6 +391,7 @@ class VideoSnapshotService:
     def _process_frames(
         self,
         location_id: str,
+        variant: str | None,
         video_path: Path,
         frame_indices: list[int],
         overlap_threshold: float | None,
@@ -331,6 +416,7 @@ class VideoSnapshotService:
                 status = self.occupancy_service.get_frame_status(
                     location_id,
                     frame,
+                    variant=variant,
                     overlap_threshold=overlap_threshold,
                     box_overlap_threshold=box_overlap_threshold,
                     confidence_threshold=confidence_threshold,

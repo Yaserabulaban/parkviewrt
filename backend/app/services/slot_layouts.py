@@ -5,6 +5,17 @@ PARKING_SLOT_LAYOUTS = {
     "fci": {
         "display_slot_ids": [f"A{index}" for index in range(1, 76)],
         "monitored_slot_ids": [f"A{index}" for index in range(1, 76)],
+        "default_variant": "day",
+        "variants": {
+            "day": {
+                "display_slot_ids": [f"A{index}" for index in range(1, 76)],
+                "monitored_slot_ids": [f"A{index}" for index in range(1, 76)],
+            },
+            "night": {
+                "display_slot_ids": [f"A{index}" for index in range(1, 78)],
+                "monitored_slot_ids": [f"A{index}" for index in range(1, 78)],
+            },
+        },
     },
     "faie": {
         "display_slot_ids": [f"B{index}" for index in range(1, 41)],
@@ -15,6 +26,7 @@ PARKING_SLOT_LAYOUTS = {
 
 def build_demo_parking_status(
     location_id: str,
+    variant: str | None = None,
     occupancy_rate: float = 0.5,
     seed: int | None = None,
 ) -> dict:
@@ -25,13 +37,22 @@ def build_demo_parking_status(
     if occupancy_rate < 0 or occupancy_rate > 1:
         raise ValueError("occupancy_rate must be between 0 and 1")
 
+    slot_layout = PARKING_SLOT_LAYOUTS[normalized_location_id]
+    if variant:
+        if normalized_location_id != "fci":
+            raise ValueError("video variants are supported for FCI only")
+        normalized_variant = variant.lower()
+        if normalized_variant not in slot_layout.get("variants", {}):
+            raise ValueError("variant must be either day or night")
+        slot_layout = slot_layout["variants"][normalized_variant]
+
     generator = random.Random(seed)
     slots = [
         {
             "slot_id": slot_id,
             "occupied": generator.random() < occupancy_rate,
         }
-        for slot_id in PARKING_SLOT_LAYOUTS[normalized_location_id]["display_slot_ids"]
+        for slot_id in slot_layout["display_slot_ids"]
     ]
     occupied_count = sum(1 for slot in slots if slot["occupied"])
     total_slots = len(slots)

@@ -26,7 +26,7 @@ export default function FCIParkingView() {
 
   const variantLayout = fciVariantLayouts[videoVariant];
   const monitoredSlotIds = new Set(
-    Array.from({ length: variantLayout.totalSlots }, (_, index) => `A${index + 1}`)
+    Array.from({ length: variantLayout.monitoredSlots }, (_, index) => `A${index + 1}`)
   );
   const slotGroups = variantLayout.slotGroups;
 
@@ -69,12 +69,12 @@ export default function FCIParkingView() {
         isOccupied={slotsMap.get(id) ?? false}
         monitored={monitored}
         size="map"
-        className="h-12 w-8 shrink-0 text-[11px]"
+        className="!h-11 !w-8 shrink-0 text-[10px]"
       />
     );
   };
   const renderSlotRow = (slotIds: string[], className = '') => (
-    <div className={`flex flex-nowrap gap-1.5 ${className}`}>
+    <div className={`flex min-w-0 flex-nowrap gap-1 ${className}`}>
       {slotIds.map(renderSlot)}
     </div>
   );
@@ -196,9 +196,9 @@ export default function FCIParkingView() {
             <div className="overflow-hidden">
               <div className="mx-auto w-full max-w-[900px] rounded-lg border border-slate-200 bg-[#747a78] p-4 shadow-inner">
                 <div className="mb-4 flex items-center justify-between">
-                  <div className="rounded-md bg-[#656b69] p-2.5">
+                  <div className="w-56 rounded-md bg-[#656b69] p-2.5">
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-100">
-                      Row A - Top Left
+                      Row A - Top Left Line
                     </div>
                     {renderSlotRow(slotGroups.isolated)}
                   </div>
@@ -211,7 +211,7 @@ export default function FCIParkingView() {
                 <div className="space-y-4">
                   {roadBand('Top Drive Lane')}
 
-                  <div className="rounded-md bg-[#656b69] p-3">
+                  <div className="overflow-hidden rounded-md bg-[#656b69] p-3">
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Main Left Line
                     </div>
@@ -225,7 +225,7 @@ export default function FCIParkingView() {
 
                   {roadBand('Middle Drive Lane')}
 
-                  <div className="rounded-md bg-[#656b69] p-3">
+                  <div className="overflow-hidden rounded-md bg-[#656b69] p-3">
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-100">
                       Row A - Lower Left Line
                     </div>
@@ -273,25 +273,21 @@ function rangeSlots(start: number, end: number) {
   return Array.from({ length: end - start + 1 }, (_, index) => `A${start + index}`);
 }
 
+const fciVisualSlotGroups = {
+  isolated: rangeSlots(1, 6),
+  upper: rangeSlots(7, 26),
+  middle: rangeSlots(27, 50),
+  lowerUpper: rangeSlots(51, 65),
+  lowerBottom: rangeSlots(66, 77),
+};
+
 const fciVariantLayouts = {
   day: {
-    totalSlots: 75,
-    slotGroups: {
-      isolated: rangeSlots(1, 4),
-      upper: rangeSlots(5, 22),
-      middle: rangeSlots(23, 41),
-      lowerUpper: rangeSlots(42, 61),
-      lowerBottom: rangeSlots(62, 75),
-    },
+    monitoredSlots: 75,
+    slotGroups: fciVisualSlotGroups,
   },
   night: {
-    totalSlots: 77,
-    slotGroups: {
-      isolated: rangeSlots(1, 6),
-      upper: rangeSlots(7, 26),
-      middle: rangeSlots(27, 50),
-      lowerUpper: rangeSlots(51, 65),
-      lowerBottom: rangeSlots(66, 77),
-    },
+    monitoredSlots: 77,
+    slotGroups: fciVisualSlotGroups,
   },
 };

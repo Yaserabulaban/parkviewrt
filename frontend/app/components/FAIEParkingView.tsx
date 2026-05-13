@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { ArrowLeft, ExternalLink, RefreshCw, Shuffle } from 'lucide-react';
+import { useState } from 'react';
 import ParkingSlot from '../components/ParkingSlot';
 import ParkingVideoPreview from '../components/ParkingVideoPreview';
 import logoImage from '@/assets/mmu-logo.png';
@@ -9,6 +10,7 @@ import { getParkingDebugImageUrl } from '@/api/parkingApi';
 
 export default function FAIEParkingView() {
   const navigate = useNavigate();
+  const [videoVariant, setVideoVariant] = useState<'day' | 'night'>('day');
   const {
     data,
     loading,
@@ -20,9 +22,8 @@ export default function FAIEParkingView() {
     refetch,
     fetchDemoStatus,
     syncVideoFrame,
-  } = useParkingStatus('faie');
+  } = useParkingStatus('faie', videoVariant);
 
-  const monitoredSlotIds = new Set(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']);
   const uShapeSlots = [
     'B1',
     'B2',
@@ -75,7 +76,12 @@ export default function FAIEParkingView() {
   const debugFrameIndex = data?.source?.type === 'video_snapshot'
     ? data.source.frame_index
     : 0;
-  const debugImageUrl = getParkingDebugImageUrl('faie', debugFrameIndex);
+  const debugImageUrl = getParkingDebugImageUrl(
+    'faie',
+    debugFrameIndex,
+    'video',
+    videoVariant
+  );
   const statusSourceLabel =
     data?.source?.type === 'video_snapshot'
       ? `Video frame ${data.source.frame_index}`
@@ -103,6 +109,23 @@ export default function FAIEParkingView() {
             </h1>
 
             <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="flex rounded-md border border-slate-300 bg-white p-1">
+                {(['day', 'night'] as const).map((variant) => (
+                  <button
+                    key={variant}
+                    type="button"
+                    onClick={() => setVideoVariant(variant)}
+                    className={`rounded px-3 py-2 text-sm font-semibold transition ${
+                      videoVariant === variant
+                        ? 'bg-slate-900 text-white'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {variant === 'day' ? 'Day' : 'Night'}
+                  </button>
+                ))}
+              </div>
+
               <Button
                 onClick={refetch}
                 disabled={busy}
@@ -180,13 +203,12 @@ export default function FAIEParkingView() {
                   style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}
                 >
                   {baseSlots.map((id) => {
-                    const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
                     return (
                       <ParkingSlot
                         key={id}
                         id={id}
                         isOccupied={slotsMap.get(id) ?? false}
-                        monitored={monitored}
+                        monitored={slotsMap.has(id)}
                         size="map"
                         className="h-14 w-8 text-[10px]"
                       />
@@ -196,13 +218,12 @@ export default function FAIEParkingView() {
 
                 <div className="absolute left-[1100px] top-[200px] flex flex-col gap-3">
                   {rightSideSlots.map((id) => {
-                    const monitored = slotsMap.has(id) || monitoredSlotIds.has(id);
                     return (
                       <ParkingSlot
                         key={id}
                         id={id}
                         isOccupied={slotsMap.get(id) ?? false}
-                        monitored={monitored}
+                        monitored={slotsMap.has(id)}
                         size="map"
                         className="h-14 w-8 -rotate-[20deg] text-[10px]"
                       />
@@ -237,7 +258,8 @@ export default function FAIEParkingView() {
 
           <ParkingVideoPreview
             locationId="faie"
-            title="FAIE Day Footage"
+            variant={videoVariant}
+            title={`FAIE ${videoVariant === 'day' ? 'Day' : 'Night'} Footage`}
             onFrameChange={syncVideoFrame}
           />
         </div>

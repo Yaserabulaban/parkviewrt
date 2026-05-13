@@ -3,12 +3,12 @@ import random
 
 PARKING_SLOT_LAYOUTS = {
     "fci": {
-        "display_slot_ids": [f"A{index}" for index in range(1, 76)],
+        "display_slot_ids": [f"A{index}" for index in range(1, 78)],
         "monitored_slot_ids": [f"A{index}" for index in range(1, 76)],
         "default_variant": "day",
         "variants": {
             "day": {
-                "display_slot_ids": [f"A{index}" for index in range(1, 76)],
+                "display_slot_ids": [f"A{index}" for index in range(1, 78)],
                 "monitored_slot_ids": [f"A{index}" for index in range(1, 76)],
             },
             "night": {
@@ -19,7 +19,18 @@ PARKING_SLOT_LAYOUTS = {
     },
     "faie": {
         "display_slot_ids": [f"B{index}" for index in range(1, 41)],
-        "monitored_slot_ids": [f"B{index}" for index in range(1, 41)],
+        "monitored_slot_ids": [f"B{index}" for index in range(1, 23)],
+        "default_variant": "day",
+        "variants": {
+            "day": {
+                "display_slot_ids": [f"B{index}" for index in range(1, 41)],
+                "monitored_slot_ids": [f"B{index}" for index in range(1, 23)],
+            },
+            "night": {
+                "display_slot_ids": [f"B{index}" for index in range(1, 41)],
+                "monitored_slot_ids": [f"B{index}" for index in range(1, 19)],
+            },
+        },
     },
 }
 
@@ -39,8 +50,6 @@ def build_demo_parking_status(
 
     slot_layout = PARKING_SLOT_LAYOUTS[normalized_location_id]
     if variant:
-        if normalized_location_id != "fci":
-            raise ValueError("video variants are supported for FCI only")
         normalized_variant = variant.lower()
         if normalized_variant not in slot_layout.get("variants", {}):
             raise ValueError("variant must be either day or night")

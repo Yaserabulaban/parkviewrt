@@ -33,16 +33,17 @@ Recommended filenames:
 ```text
 fci/day/fci_video.mov
 fci/night/fci_video.mov
-faie_video.mov
+faie/day/faie_video.MOV
+faie/night/faie_video.MOV
 ```
 
-For FCI, the dashboard sends `variant=day` or `variant=night`; the backend prefers videos under the matching variant folder. Supported extensions are `.mp4`, `.avi`, `.mov`, and `.mkv`.
+For FCI and FAIE, the dashboard sends `variant=day` or `variant=night`; the backend prefers videos under the matching variant folder. Supported extensions are `.mp4`, `.avi`, `.mov`, and `.mkv`.
 
 After replacing a video with the same filename, clear generated frame status cache if needed:
 
 ```powershell
 Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/fci
-Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/faie/faie_video
+Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/faie
 ```
 
 The dashboard video itself uses cache-busting metadata, so the browser should load the new file after a refresh.
@@ -64,9 +65,10 @@ http://127.0.0.1:8001/api/config
 Expected slot metadata:
 
 ```text
-FCI day monitored slots: 75
+FCI day display slots: 77, monitored slots: 75
 FCI night monitored slots: 77
-FAIE monitored slots: 40
+FAIE day display slots: 40, monitored slots: 22
+FAIE night display slots: 40, monitored slots: 18
 ```
 
 Video metadata:
@@ -74,7 +76,8 @@ Video metadata:
 ```text
 http://127.0.0.1:8001/api/video/fci/metadata?variant=day
 http://127.0.0.1:8001/api/video/fci/metadata?variant=night
-http://127.0.0.1:8001/api/video/faie/metadata
+http://127.0.0.1:8001/api/video/faie/metadata?variant=day
+http://127.0.0.1:8001/api/video/faie/metadata?variant=night
 ```
 
 Expected:
@@ -91,7 +94,8 @@ Video snapshot:
 ```text
 http://127.0.0.1:8001/api/status/fci/video-snapshot?variant=day&frame_index=0&use_cache=false
 http://127.0.0.1:8001/api/status/fci/video-snapshot?variant=night&frame_index=0&use_cache=false
-http://127.0.0.1:8001/api/status/faie/video-snapshot?frame_index=0&use_cache=false
+http://127.0.0.1:8001/api/status/faie/video-snapshot?variant=day&frame_index=0&use_cache=false
+http://127.0.0.1:8001/api/status/faie/video-snapshot?variant=night&frame_index=0&use_cache=false
 ```
 
 Expected:
@@ -99,7 +103,7 @@ Expected:
 ```text
 JSON response includes source.type = video_snapshot
 source.frame_index matches the requested frame or the last valid frame
-total_slots is 75 for FCI day, 77 for FCI night, and 40 for FAIE
+total_slots is 75 for FCI day, 77 for FCI night, 22 for FAIE day, and 18 for FAIE night
 available_count + occupied_count = total_slots
 ```
 
@@ -108,7 +112,8 @@ Video debug:
 ```text
 http://127.0.0.1:8001/api/debug/fci?source=video&variant=day&frame_index=0
 http://127.0.0.1:8001/api/debug/fci?source=video&variant=night&frame_index=0
-http://127.0.0.1:8001/api/debug/faie?source=video&frame_index=0
+http://127.0.0.1:8001/api/debug/faie?source=video&variant=day&frame_index=0
+http://127.0.0.1:8001/api/debug/faie?source=video&variant=night&frame_index=0
 ```
 
 Expected:

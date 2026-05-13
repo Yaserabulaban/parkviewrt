@@ -88,7 +88,7 @@ threshold      Slot polygon overlap threshold. Default: 0.25
 box_threshold  Detection-box overlap threshold. Default: 0.20
 confidence     YOLO confidence threshold. Default: 0.20
 image_size     YOLO inference image size. Default: 1600
-variant        FCI only: day or night. Default: day
+variant        day or night. Default: day
 ```
 
 Example response:
@@ -119,7 +119,7 @@ Optional query parameters:
 ```text
 occupancy_rate  Occupied probability per slot. Default: 0.5
 seed            Optional integer for repeatable output
-variant         FCI only: day or night. Default: day
+variant         day or night. Default: day
 ```
 
 Example:
@@ -127,6 +127,7 @@ Example:
 ```text
 GET /api/status/fci/demo?occupancy_rate=0.6&seed=7
 GET /api/status/fci/demo?variant=night&occupancy_rate=0.6&seed=7
+GET /api/status/faie/demo?variant=night&occupancy_rate=0.6&seed=7
 ```
 
 ## Video Metadata
@@ -140,7 +141,7 @@ Purpose: return the selected local video details used by the frontend for playba
 Optional query parameters:
 
 ```text
-variant        FCI only: day or night. Default: day
+variant        day or night. Default: day
 ```
 
 Example response:
@@ -170,7 +171,7 @@ Purpose: serve the selected local video to the dashboard. The response uses no-c
 Optional query parameters:
 
 ```text
-variant        FCI only: day or night. Default: day
+variant        day or night. Default: day
 ```
 
 Supported video extensions:
@@ -201,7 +202,7 @@ threshold       Slot polygon overlap threshold. Default: configured backend valu
 box_threshold   Detection-box overlap threshold. Default: configured backend value
 confidence      YOLO confidence threshold. Default: configured backend value
 image_size      YOLO inference image size. Default: configured backend value
-variant         FCI only: day or night. Default: day
+variant         day or night. Default: day
 ```
 
 Example:
@@ -209,6 +210,7 @@ Example:
 ```text
 GET /api/status/fci/video-snapshot?frame_index=300&use_cache=false
 GET /api/status/fci/video-snapshot?variant=night&frame_index=300
+GET /api/status/faie/video-snapshot?variant=night&frame_index=300
 ```
 
 Example response:
@@ -250,7 +252,7 @@ threshold       Slot polygon overlap threshold
 box_threshold   Detection-box overlap threshold
 confidence      YOLO confidence threshold
 image_size      YOLO inference image size
-variant         FCI only: day or night. Default: day
+variant         day or night. Default: day
 ```
 
 Example:
@@ -276,7 +278,7 @@ threshold
 box_threshold
 confidence
 image_size
-variant         FCI only: day or night. Default: day
+variant         day or night. Default: day
 ```
 
 Examples:
@@ -284,6 +286,7 @@ Examples:
 ```text
 GET /api/debug/fci?source=video&frame_index=300
 GET /api/debug/fci?source=video&variant=night&frame_index=300
+GET /api/debug/faie?source=video&variant=night&frame_index=300
 GET /api/debug/faie?source=static
 ```
 

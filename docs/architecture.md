@@ -23,8 +23,9 @@ backend/app/
   services/occupancy.py
   services/video_snapshot.py
   services/slot_layouts.py
-  tools/generate_fci_day_slots.py
-  tools/generate_fci_night_slots.py
+  tools/generate_fci_slots.py
+  tools/generate_faie_slots.py
+  tools/slot_generation.py
   tools/cache_video_status.py
   data/images/
   data/slots/
@@ -45,12 +46,11 @@ frontend/
 2. `ParkingVideoPreview` requests `/api/video/{location_id}/metadata`, then plays `/api/video/{location_id}`.
 3. The frontend converts the current video timestamp to a frame index using the reported FPS.
 4. `useParkingStatus` requests `/api/status/{location_id}/video-snapshot?frame_index=...`.
-   For FCI, the dashboard also sends `variant=day` or `variant=night`.
+   The dashboard also sends `variant=day` or `variant=night`.
 5. `VideoSnapshotService` reads the requested frame from the selected local video.
 6. `ParkingOccupancyService` runs YOLO on that frame.
 7. The detector keeps vehicle classes `car` and `truck`.
-8. Vehicle boxes are compared with slot polygons loaded from `backend/app/data/slots/{location_id}_slots.json`.
-   For FCI variants, the backend loads `fci_day_slots.json` or `fci_night_slots.json`.
+8. Vehicle boxes are compared with variant-specific slot polygons such as `fci_day_slots.json` or `faie_night_slots.json`.
 9. The backend returns occupied/free slot status, counts, source metadata, and cache state.
 10. The frontend updates the visual parking layout.
 
@@ -97,10 +97,10 @@ PARKVIEWRT_BOX_THRESHOLD
 ## Slot Coverage
 
 ```text
-FCI day display/monitored slots: A1-A75
+FCI day display slots: A1-A77, monitored slots: A1-A75
 FCI night display/monitored slots: A1-A77
-FAIE display slots: B1-B40
-FAIE monitored slots: B1-B40
+FAIE day display slots: B1-B40, monitored slots: B1-B22
+FAIE night display slots: B1-B40, monitored slots: B1-B18
 ```
 
 ## Video and Cache Behavior
@@ -120,7 +120,7 @@ Supported extensions:
 .mkv
 ```
 
-The backend serves videos through `/api/video/{location_id}` with no-cache headers. FCI accepts `variant=day` and `variant=night`; the selected variant also chooses the matching slot polygon file. The frontend appends a version token based on file size and last modified time so replacing a video with the same filename refreshes correctly in the browser.
+The backend serves videos through `/api/video/{location_id}` with no-cache headers. FCI and FAIE accept `variant=day` and `variant=night`; the selected variant chooses the matching video folder and slot polygon file. The frontend appends a version token based on file size and last modified time so replacing a video with the same filename refreshes correctly in the browser.
 
 Frame status results are saved under:
 

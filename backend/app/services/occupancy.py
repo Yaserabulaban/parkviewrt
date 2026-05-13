@@ -14,8 +14,11 @@ SLOTS_DIR = BASE_DIR / "data" / "slots"
 IMAGES_DIR = BASE_DIR / "data" / "images"
 OUTPUTS_DIR = BASE_DIR / "data" / "outputs"
 VALID_LOCATION_IDS = {"fci", "faie"}
-VALID_FCI_VARIANTS = {"day", "night"}
-DEFAULT_FCI_VARIANT = "day"
+VALID_VIDEO_VARIANTS = {"day", "night"}
+DEFAULT_VIDEO_VARIANTS = {
+    "fci": "day",
+    "faie": "day",
+}
 
 
 class ParkingOccupancyService:
@@ -251,35 +254,30 @@ class ParkingOccupancyService:
         if location_id not in VALID_LOCATION_IDS:
             raise ValueError(f"Unknown location: {location_id}")
 
-        if location_id != "fci":
-            if variant:
-                raise ValueError("video variants are supported for FCI only")
-            return None
-
-        normalized_variant = DEFAULT_FCI_VARIANT if variant is None else variant.lower()
-        if normalized_variant not in VALID_FCI_VARIANTS:
+        normalized_variant = (
+            DEFAULT_VIDEO_VARIANTS[location_id]
+            if variant is None
+            else variant.lower()
+        )
+        if normalized_variant not in VALID_VIDEO_VARIANTS:
             raise ValueError("variant must be either day or night")
 
         return normalized_variant
 
     def _load_slots(self, location_id: str, variant: str | None = None) -> dict:
         normalized_variant = self._normalize_variant(location_id, variant)
-        if normalized_variant:
-            slot_path = SLOTS_DIR / f"{location_id}_{normalized_variant}_slots.json"
-        else:
-            slot_path = SLOTS_DIR / f"{location_id}_slots.json"
-
+        slot_path = SLOTS_DIR / f"{location_id}_{normalized_variant}_slots.json"
         if not slot_path.exists():
-            raise FileNotFoundError(f"Slot file not found: {slot_path}")
+            raise FileNotFoundError(
+                f"Slot file not found for location: {location_id}, variant: {normalized_variant}"
+            )
 
         with slot_path.open("r", encoding="utf-8") as slot_file:
             return json.load(slot_file)
 
     def _get_image_path(self, location_id: str, variant: str | None = None) -> Path:
         normalized_variant = self._normalize_variant(location_id, variant)
-        image_names = [location_id]
-        if normalized_variant:
-            image_names = [f"{location_id}_{normalized_variant}"]
+        image_names = [f"{location_id}_{normalized_variant}", location_id]
 
         for image_name in image_names:
             for extension in (".jpg", ".jpeg", ".png"):

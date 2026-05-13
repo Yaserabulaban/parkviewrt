@@ -216,16 +216,21 @@ def test_config_endpoint_returns_detection_settings():
     assert config["slot_layouts"]["fci"]["monitored_slot_ids"][0] == "A1"
     assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A75"
     assert len(config["slot_layouts"]["fci"]["monitored_slot_ids"]) == 75
-    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][0] == "B1"
-    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][-1] == "B40"
-    assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 40
     assert config["slot_layouts"]["fci"]["display_slot_ids"][0] == "A1"
-    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A75"
+    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A77"
     assert config["slot_layouts"]["fci"]["default_variant"] == "day"
+    assert config["slot_layouts"]["fci"]["variants"]["day"]["display_slot_ids"][-1] == "A77"
     assert config["slot_layouts"]["fci"]["variants"]["day"]["monitored_slot_ids"][-1] == "A75"
     assert config["slot_layouts"]["fci"]["variants"]["night"]["monitored_slot_ids"][-1] == "A77"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][-1] == "B40"
+    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][-1] == "B22"
+    assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 22
+    assert config["slot_layouts"]["faie"]["default_variant"] == "day"
+    assert config["slot_layouts"]["faie"]["variants"]["day"]["monitored_slot_ids"][-1] == "B22"
+    assert len(config["slot_layouts"]["faie"]["variants"]["day"]["monitored_slot_ids"]) == 22
+    assert config["slot_layouts"]["faie"]["variants"]["night"]["monitored_slot_ids"][-1] == "B18"
+    assert len(config["slot_layouts"]["faie"]["variants"]["night"]["monitored_slot_ids"]) == 18
 
 
 def test_status_endpoint_returns_parking_counts(monkeypatch):
@@ -306,6 +311,21 @@ def test_fci_demo_status_endpoint_accepts_night_variant():
     assert data["location_id"] == "fci"
     assert data["total_slots"] == 77
     assert data["slots"][-1]["slot_id"] == "A77"
+
+
+def test_faie_demo_status_endpoint_accepts_night_variant():
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/faie/demo",
+        params={"variant": "night", "occupancy_rate": 0.5, "seed": 7},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_id"] == "faie"
+    assert data["total_slots"] == 40
+    assert data["slots"][-1]["slot_id"] == "B40"
 
 
 def test_demo_status_endpoint_rejects_invalid_occupancy_rate():
@@ -447,6 +467,20 @@ def test_fci_video_variant_is_forwarded(monkeypatch):
 
     response = client.get(
         "/api/status/fci/video-snapshot",
+        params={"variant": "night", "frame_index": 9},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["source"]["variant"] == "night"
+    assert response.json()["source"]["frame_index"] == 9
+
+
+def test_faie_video_variant_is_forwarded(monkeypatch):
+    monkeypatch.setattr(status_routes, "video_snapshot_service", FakeVideoSnapshotService())
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/status/faie/video-snapshot",
         params={"variant": "night", "frame_index": 9},
     )
 

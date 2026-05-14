@@ -24,42 +24,6 @@ export default function FAIEParkingView() {
     syncVideoFrame,
   } = useParkingStatus('faie', videoVariant);
 
-  const uShapeSlots = [
-    'B1',
-    'B2',
-    'B3',
-    'B4',
-    'B5',
-    'B6',
-    'B7',
-    'B8',
-    'B9',
-    'B10',
-    'B11',
-    'B12',
-    'B13',
-    'B14',
-    'B15',
-    'B16',
-    'B17',
-    'B18',
-    'B19',
-    'B20',
-    'B21',
-    'B22',
-    'B23',
-    'B24',
-    'B25',
-    'B26',
-    'B27',
-    'B28',
-    'B29',
-    'B30',
-  ];
-  const baseSlots = uShapeSlots.slice(0, 25);
-  const rightSideSlots = uShapeSlots.slice(25);
-  const centerSlots = Array.from({ length: 10 }, (_, index) => `B${index + 31}`);
-
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
   );
@@ -89,6 +53,38 @@ export default function FAIEParkingView() {
           ? 'Demo random'
           : 'Static image';
   const busy = loading || refreshing || demoLoading;
+  const monitoredSlotLimit = videoVariant === 'day' ? 22 : 18;
+  const monitoredSlotIds = new Set(
+    Array.from({ length: monitoredSlotLimit }, (_, index) => `B${index + 1}`)
+  );
+  const slotGroups = faieSlotGroups[videoVariant];
+  const renderSlot = (id: string, className = '') => (
+    <ParkingSlot
+      key={id}
+      id={id}
+      isOccupied={slotsMap.get(id) ?? false}
+      monitored={monitoredSlotIds.has(id)}
+      size="map"
+      className={`!h-11 !w-7 shrink-0 text-[10px] ${className}`}
+    />
+  );
+  const renderSlotRow = (slotIds: string[], className = '') => (
+    <div
+      className={`flex min-w-0 flex-nowrap justify-center gap-1.5 ${className}`}
+    >
+      {slotIds.map((id) => renderSlot(id))}
+    </div>
+  );
+  const renderMainCurbSlots = () => (
+    <div className="flex min-w-0 flex-nowrap items-center justify-between gap-10">
+      {slotGroups.main.map((slotSet) => renderSlotRow(slotSet, 'shrink-0'))}
+    </div>
+  );
+  const renderAngledSlot = (id: string) => (
+    <div key={id} className="-rotate-[18deg] self-center">
+      {renderSlot(id)}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -187,64 +183,107 @@ export default function FAIEParkingView() {
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 rounded-lg bg-white p-8 shadow-lg">
-            <div className="overflow-x-auto">
-              <div className="relative mx-auto h-[580px] max-w-[1200px] overflow-hidden rounded-lg border border-slate-200 bg-[#747a78] p-6 shadow-inner">
-                <div className="absolute inset-x-0 top-0 h-24 bg-[#86a66f]" />
+            <h2 className="mb-6 text-2xl font-semibold text-gray-800">
+              Parking Layout - FAIE U Shape
+            </h2>
 
-                <div className="absolute left-[70px] top-[220px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
-                <div className="absolute left-[58px] top-[410px] h-[88px] w-[896px] rounded-l-md bg-[#565d5b]" />
-                <div className="absolute left-[900px] top-[220px] h-[278px] w-24 rounded-r-md bg-[#565d5b]" />
-                <div className="absolute left-[100px] top-[262px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
-                <div className="absolute left-[100px] top-[452px] w-[780px] border-t-2 border-dashed border-yellow-300/80" />
-                <div className="absolute left-[948px] top-[252px] h-[200px] border-l-2 border-dashed border-yellow-300/80" />
+            <div className="relative mx-auto aspect-[16/9] min-h-[520px] w-full max-w-[1120px] overflow-hidden rounded-lg border border-slate-200 bg-[#747a78] p-4 shadow-inner">
+              <div className="absolute inset-x-0 top-0 h-[18%] bg-[#86a66f]" />
+              <div className="absolute left-4 top-4 rounded bg-[#86a66f] px-3 py-2 text-xs font-semibold text-white">
+                Tree Line / Faculty Side
+              </div>
+              {/* <div className="absolute right-4 bottom-4 rounded bg-[#656b69] px-3 py-2 text-xs font-semibold text-slate-100">
+                Entrance / Exit Road
+              </div> */}
 
-                <div
-                  className="absolute left-[42px] top-[126px] grid gap-1"
-                  style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}
-                >
-                  {baseSlots.map((id) => {
-                    return (
-                      <ParkingSlot
-                        key={id}
-                        id={id}
-                        isOccupied={slotsMap.get(id) ?? false}
-                        monitored={slotsMap.has(id)}
-                        size="map"
-                        className="h-14 w-8 text-[10px]"
-                      />
-                    );
-                  })}
-                </div>
+              <div
+                className="absolute rounded bg-[#4f5554]"
+                style={{
+                  left: faieLayoutTuning.roadLeft,
+                  right: faieLayoutTuning.roadRight,
+                  top: faieLayoutTuning.topRoadTop,
+                  height: faieLayoutTuning.roadThickness,
+                }}
+              />
+              <div
+                className="absolute rounded bg-[#4f5554]"
+                style={{
+                  right: faieLayoutTuning.roadRight,
+                  top: faieLayoutTuning.topRoadTop,
+                  bottom: faieLayoutTuning.bottomRoadBottom,
+                  width: faieLayoutTuning.roadThickness,
+                }}
+              />
+              <div
+                className="absolute rounded bg-[#4f5554]"
+                style={{
+                  left: faieLayoutTuning.roadLeft,
+                  right: faieLayoutTuning.roadRight,
+                  bottom: faieLayoutTuning.bottomRoadBottom,
+                  height: faieLayoutTuning.roadThickness,
+                }}
+              />
 
-                <div className="absolute left-[1100px] top-[200px] flex flex-col gap-3">
-                  {rightSideSlots.map((id) => {
-                    return (
-                      <ParkingSlot
-                        key={id}
-                        id={id}
-                        isOccupied={slotsMap.get(id) ?? false}
-                        monitored={slotsMap.has(id)}
-                        size="map"
-                        className="h-14 w-8 -rotate-[20deg] text-[10px]"
-                      />
-                    );
-                  })}
-                </div>
+              <div
+                className="absolute border-t-2 border-dashed border-yellow-300/80"
+                style={{
+                  left: faieLayoutTuning.laneLineHorizontalInset,
+                  right: faieLayoutTuning.laneLineHorizontalInset,
+                  top: faieLayoutTuning.topLaneLineTop,
+                }}
+              />
+              <div
+                className="absolute border-l-2 border-dashed border-yellow-300/80"
+                style={{
+                  right: faieLayoutTuning.verticalLaneLineRight,
+                  top: faieLayoutTuning.verticalLaneLineTop,
+                  bottom: faieLayoutTuning.verticalLaneLineBottom,
+                }}
+              />
+              <div
+                className="absolute border-t-2 border-dashed border-yellow-300/80"
+                style={{
+                  left: faieLayoutTuning.laneLineHorizontalInset,
+                  right: faieLayoutTuning.laneLineHorizontalInset,
+                  bottom: faieLayoutTuning.bottomLaneLineBottom,
+                }}
+              />
 
-                <div className="absolute left-[250px] top-[330px] grid grid-cols-10 gap-3">
-                  {centerSlots.map((id) => (
-                    <ParkingSlot
-                      key={id}
-                      id={id}
-                      isOccupied={slotsMap.get(id) ?? false}
-                      monitored={slotsMap.has(id)}
-                      size="map"
-                      className="h-14 w-8 text-[10px]"
-                    />
-                  ))}
-                </div>
+              <div
+                className="absolute"
+                style={{
+                  left: faieLayoutTuning.topSlotsLeft,
+                  right: faieLayoutTuning.topSlotsRight,
+                  top: faieLayoutTuning.topSlotsTop,
+                }}
+              >
+                {renderMainCurbSlots()}
+              </div>
 
-                <div className="absolute right-6 top-6 flex items-center gap-3 rounded bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700">
+              <div
+                className="absolute flex flex-col justify-between"
+                style={{
+                  right: faieLayoutTuning.angledSlotsRight,
+                  top: faieLayoutTuning.angledSlotsTop,
+                  bottom: faieLayoutTuning.angledSlotsBottom,
+                  width: faieLayoutTuning.angledSlotsWidth,
+                }}
+              >
+                {slotGroups.angled.map(renderAngledSlot)}
+              </div>
+
+              <div
+                className="absolute p-3"
+                style={{
+                  left: faieLayoutTuning.middleSlotsLeft,
+                  right: faieLayoutTuning.middleSlotsRight,
+                  top: faieLayoutTuning.middleSlotsTop,
+                }}
+              >
+                {renderSlotRow(slotGroups.middle)}
+              </div>
+
+              <div className="absolute bottom-4 left-4 flex items-center gap-3 rounded bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700">
                   <span className="inline-block h-3 w-3 rounded bg-red-500" />
                   Occupied
                   <span className="inline-block h-3 w-3 rounded bg-green-500" />
@@ -252,7 +291,6 @@ export default function FAIEParkingView() {
                   <span className="inline-block h-3 w-3 rounded bg-slate-300" />
                   Not monitored
                 </div>
-              </div>
             </div>
           </div>
 
@@ -267,3 +305,44 @@ export default function FAIEParkingView() {
     </div>
   );
 }
+
+function rangeSlots(start: number, end: number) {
+  return Array.from({ length: end - start + 1 }, (_, index) => `B${start + index}`);
+}
+
+const faieSlotGroups = {
+  day: {
+    main: [rangeSlots(1, 15), rangeSlots(23, 25)],
+    angled: rangeSlots(26, 31),
+    middle: [...rangeSlots(16, 22), ...rangeSlots(32, 40)],
+  },
+  night: {
+    main: [rangeSlots(1, 15), rangeSlots(19, 25)],
+    angled: rangeSlots(26, 31),
+    middle: [...rangeSlots(16, 18), ...rangeSlots(32, 40)],
+  },
+};
+
+const faieLayoutTuning = {
+  roadLeft: '9%',
+  roadRight: '12%',
+  roadThickness: '10%',
+  topRoadTop: '33%',
+  bottomRoadBottom: '15%',
+  laneLineHorizontalInset: '17%',
+  topLaneLineTop: '37.5%',
+  bottomLaneLineBottom: '20.5%',
+  verticalLaneLineRight: '17%',
+  verticalLaneLineTop: '38%',
+  verticalLaneLineBottom: '21%',
+  topSlotsLeft: '10%',
+  topSlotsRight: '10%',
+  topSlotsTop: '23%',
+  angledSlotsRight: '3%',
+  angledSlotsTop: '33%',
+  angledSlotsBottom: '18%',
+  angledSlotsWidth: '11%',
+  middleSlotsLeft: '20%',
+  middleSlotsRight: '30%',
+  middleSlotsTop: '51%',
+};

@@ -1,9 +1,10 @@
-export type SlotStatus = "occupied" | "empty";
+export type SlotStatus = "occupied" | "available" | "occluded";
 export type ParkingVideoVariant = "day" | "night";
 
 export interface ParkingSlotDto {
   slot_id: string;
   occupied: boolean;
+  status?: SlotStatus;
 }
 
 export interface VideoSnapshotSource {
@@ -44,6 +45,7 @@ export interface ParkingStatusResponse {
   total_slots: number;
   occupied_count: number;
   available_count: number;
+  occluded_count?: number;
   slots: ParkingSlotDto[];
   updated_at?: string;
   source?: VideoSnapshotSource | VideoSamplesSource;

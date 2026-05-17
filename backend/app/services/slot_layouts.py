@@ -3,13 +3,13 @@ import random
 
 PARKING_SLOT_LAYOUTS = {
     "fci": {
-        "display_slot_ids": [f"A{index}" for index in range(1, 78)],
-        "monitored_slot_ids": [f"A{index}" for index in range(1, 76)],
+        "display_slot_ids": [f"A{index}" for index in range(1, 79)],
+        "monitored_slot_ids": [f"A{index}" for index in range(1, 79)],
         "default_variant": "day",
         "variants": {
             "day": {
-                "display_slot_ids": [f"A{index}" for index in range(1, 78)],
-                "monitored_slot_ids": [f"A{index}" for index in range(1, 76)],
+                "display_slot_ids": [f"A{index}" for index in range(1, 79)],
+                "monitored_slot_ids": [f"A{index}" for index in range(1, 79)],
             },
             "night": {
                 "display_slot_ids": [f"A{index}" for index in range(1, 78)],
@@ -63,6 +63,9 @@ def build_demo_parking_status(
         }
         for slot_id in slot_layout["display_slot_ids"]
     ]
+    for slot in slots:
+        slot["status"] = "occupied" if slot["occupied"] else "available"
+
     occupied_count = sum(1 for slot in slots if slot["occupied"])
     total_slots = len(slots)
 
@@ -71,5 +74,6 @@ def build_demo_parking_status(
         "total_slots": total_slots,
         "occupied_count": occupied_count,
         "available_count": total_slots - occupied_count,
+        "occluded_count": 0,
         "slots": slots,
     }

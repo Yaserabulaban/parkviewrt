@@ -7,6 +7,7 @@ import ParkingVideoPreview from '../components/ParkingVideoPreview';
 import logoImage from '@/assets/mmu-logo.png';
 import { useParkingStatus } from '@/hooks/useParkingStatus';
 import { getParkingDebugImageUrl } from '@/api/parkingApi';
+import type { SlotStatus } from '@/types/parking';
 
 export default function FCIParkingView() {
   const navigate = useNavigate();
@@ -33,9 +34,16 @@ export default function FCIParkingView() {
   const slotsMap = new Map(
     (data?.slots ?? []).map((slot) => [slot.slot_id, slot.occupied])
   );
+  const slotStatusMap = new Map<string, SlotStatus>(
+    (data?.slots ?? []).map((slot) => [
+      slot.slot_id,
+      slot.status ?? (slot.occupied ? 'occupied' : 'available'),
+    ])
+  );
 
   const occupiedCount = data?.occupied_count ?? 0;
   const availableCount = data?.available_count ?? 0;
+  const occludedCount = data?.occluded_count ?? 0;
   const lastUpdatedLabel = lastUpdated
     ? lastUpdated.toLocaleTimeString([], {
         hour: '2-digit',
@@ -67,6 +75,7 @@ export default function FCIParkingView() {
         key={id}
         id={id}
         isOccupied={slotsMap.get(id) ?? false}
+        status={slotStatusMap.get(id)}
         monitored={monitored}
         size="map"
         className="!h-11 !w-8 shrink-0 text-[10px]"
@@ -177,6 +186,10 @@ export default function FCIParkingView() {
                 <div className="w-6 h-6 bg-red-500 rounded"></div>
                 <span className="text-lg">Occupied: {occupiedCount}</span>
               </div>
+              <div className="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+                <div className="w-6 h-6 bg-amber-500 rounded"></div>
+                <span className="text-lg">Occluded: {occludedCount}</span>
+              </div>
             </div>
           </div>
 
@@ -249,6 +262,8 @@ export default function FCIParkingView() {
                     Occupied
                     <span className="inline-block h-3 w-3 rounded bg-green-500" />
                     Available
+                    <span className="inline-block h-3 w-3 rounded bg-amber-500" />
+                    Occluded
                     <span className="inline-block h-3 w-3 rounded bg-slate-300" />
                     Not monitored
                   </div>
@@ -275,15 +290,15 @@ function rangeSlots(start: number, end: number) {
 
 const fciVisualSlotGroups = {
   isolated: rangeSlots(1, 6),
-  upper: rangeSlots(7, 26),
-  middle: rangeSlots(27, 50),
-  lowerUpper: rangeSlots(51, 65),
-  lowerBottom: rangeSlots(66, 77),
+  upper: rangeSlots(7, 25),
+  middle: rangeSlots(26, 47),
+  lowerUpper: rangeSlots(48, 65),
+  lowerBottom: rangeSlots(66, 78),
 };
 
 const fciVariantLayouts = {
   day: {
-    monitoredSlots: 75,
+    monitoredSlots: 78,
     slotGroups: fciVisualSlotGroups,
   },
   night: {

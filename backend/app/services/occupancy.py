@@ -19,6 +19,9 @@ DEFAULT_VIDEO_VARIANTS = {
     "fci": "day",
     "faie": "day",
 }
+KNOWN_OCCLUDED_SLOTS = {
+    ("fci", "day"): {"A9", "A26", "A50", "A60", "A61", "A62", "A64"},
+}
 
 
 class ParkingOccupancyService:
@@ -92,18 +95,24 @@ class ParkingOccupancyService:
 
     def _build_status_response(self, analysis: dict) -> dict:
         slots = [
-            {"slot_id": slot["slot_id"], "occupied": slot["occupied"]}
+            {
+                "slot_id": slot["slot_id"],
+                "occupied": slot["occupied"],
+                "status": slot["status"],
+            }
             for slot in analysis["slots"]
         ]
 
-        occupied_count = sum(1 for slot in slots if slot["occupied"])
+        occupied_count = sum(1 for slot in slots if slot["status"] == "occupied")
+        occluded_count = sum(1 for slot in slots if slot["status"] == "occluded")
         total_slots = len(slots)
 
         return {
             "location_id": analysis["location_id"],
             "total_slots": total_slots,
             "occupied_count": occupied_count,
-            "available_count": total_slots - occupied_count,
+            "available_count": total_slots - occupied_count - occluded_count,
+            "occluded_count": occluded_count,
             "slots": slots,
         }
 
@@ -219,6 +228,11 @@ class ParkingOccupancyService:
             overlap_threshold=resolved_overlap_threshold,
             box_overlap_threshold=resolved_box_overlap_threshold,
         )
+        self._apply_known_occlusions(
+            normalized_location_id,
+            normalized_variant,
+            slots,
+        )
 
         return {
             "location_id": slot_data.get("location_id", normalized_location_id),
@@ -305,6 +319,7 @@ class ParkingOccupancyService:
             {
                 "slot_id": slot["slot_id"],
                 "occupied": False,
+                "status": "available",
                 "overlap_ratio": 0,
                 "box_overlap_ratio": 0,
                 "detection_center_in_slot": False,
@@ -377,9 +392,26 @@ class ParkingOccupancyService:
             if best_candidate is not None:
                 occupied_slot = occupancy_results[best_candidate["index"]]
                 occupied_slot["occupied"] = True
+                occupied_slot["status"] = "occupied"
                 occupied_slot["occupied_reason"] = best_candidate["reason"]
 
         return occupancy_results
+
+    def _apply_known_occlusions(
+        self,
+        location_id: str,
+        variant: str | None,
+        slots: list[dict],
+    ) -> None:
+        occluded_slot_ids = KNOWN_OCCLUDED_SLOTS.get((location_id, variant), set())
+        if not occluded_slot_ids:
+            return
+
+        for slot in slots:
+            if slot["slot_id"] in occluded_slot_ids and not slot["occupied"]:
+                slot["occupied"] = False
+                slot["status"] = "occluded"
+                slot["occupied_reason"] = "known-occlusion"
 
     def _draw_slots(self, image, slots: list[dict], slot_lookup: dict) -> None:
         overlay = image.copy()
@@ -387,7 +419,7 @@ class ParkingOccupancyService:
         for slot in slots:
             slot_status = slot_lookup[slot["slot_id"]]
             points = np.array(slot["points"], dtype=np.int32)
-            color = (0, 0, 255) if slot_status["occupied"] else (0, 180, 0)
+            color = self._status_color(slot_status["status"])
 
             cv2.fillPoly(overlay, [points], color)
 
@@ -396,9 +428,11 @@ class ParkingOccupancyService:
         for slot in slots:
             slot_status = slot_lookup[slot["slot_id"]]
             points = np.array(slot["points"], dtype=np.int32)
-            color = (0, 0, 255) if slot_status["occupied"] else (0, 180, 0)
+            color = self._status_color(slot_status["status"])
             reason = slot_status["occupied_reason"]
             label = f"{slot['slot_id']} S{slot_status['overlap_ratio']:.0%}"
+            if slot_status["status"] == "occluded":
+                label = f"{slot['slot_id']} OCC"
             if slot_status["occupied"] and reason != "slot-overlap":
                 label = f"{label} {self._short_reason(reason)}"
 
@@ -435,12 +469,14 @@ class ParkingOccupancyService:
     def _draw_summary(self, image, analysis: dict) -> None:
         total_slots = len(analysis["slots"])
         occupied_count = sum(1 for slot in analysis["slots"] if slot["occupied"])
-        available_count = total_slots - occupied_count
+        occluded_count = sum(1 for slot in analysis["slots"] if slot["status"] == "occluded")
+        available_count = total_slots - occupied_count - occluded_count
         detection_count = len(analysis["detections"])
         summary = (
             f"{analysis['location_id'].upper()} | "
             f"slots: {total_slots} | occupied: {occupied_count} | "
-            f"available: {available_count} | vehicles detected: {detection_count} | "
+            f"available: {available_count} | occluded: {occluded_count} | "
+            f"vehicles detected: {detection_count} | "
             f"S>={analysis['overlap_threshold']:.2f} "
             f"B>={analysis['box_overlap_threshold']:.2f} "
             f"C>={analysis['confidence_threshold']:.2f} "
@@ -464,3 +500,10 @@ class ParkingOccupancyService:
             "detection-center": "C",
             "slot-centroid": "SC",
         }.get(reason, "")
+
+    def _status_color(self, status: str) -> tuple[int, int, int]:
+        if status == "occupied":
+            return (0, 0, 255)
+        if status == "occluded":
+            return (0, 165, 255)
+        return (0, 180, 0)

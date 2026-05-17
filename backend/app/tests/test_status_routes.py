@@ -28,9 +28,10 @@ class FakeOccupancyService:
             "total_slots": 2,
             "occupied_count": 1,
             "available_count": 1,
+            "occluded_count": 0,
             "slots": [
-                {"slot_id": "A1", "occupied": True},
-                {"slot_id": "A2", "occupied": False},
+                {"slot_id": "A1", "occupied": True, "status": "occupied"},
+                {"slot_id": "A2", "occupied": False, "status": "available"},
             ],
         }
 
@@ -73,7 +74,8 @@ class FakeVideoSnapshotService:
             "total_slots": 1,
             "occupied_count": 1,
             "available_count": 0,
-            "slots": [{"slot_id": "A1", "occupied": True}],
+            "occluded_count": 0,
+            "slots": [{"slot_id": "A1", "occupied": True, "status": "occupied"}],
             "source": {
                 "type": "video_snapshot",
                 "variant": variant,
@@ -214,13 +216,13 @@ def test_config_endpoint_returns_detection_settings():
     assert config["detection"]["slot_overlap_threshold"] == 0.25
     assert config["detection"]["box_overlap_threshold"] == 0.2
     assert config["slot_layouts"]["fci"]["monitored_slot_ids"][0] == "A1"
-    assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A75"
-    assert len(config["slot_layouts"]["fci"]["monitored_slot_ids"]) == 75
+    assert config["slot_layouts"]["fci"]["monitored_slot_ids"][-1] == "A78"
+    assert len(config["slot_layouts"]["fci"]["monitored_slot_ids"]) == 78
     assert config["slot_layouts"]["fci"]["display_slot_ids"][0] == "A1"
-    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A77"
+    assert config["slot_layouts"]["fci"]["display_slot_ids"][-1] == "A78"
     assert config["slot_layouts"]["fci"]["default_variant"] == "day"
-    assert config["slot_layouts"]["fci"]["variants"]["day"]["display_slot_ids"][-1] == "A77"
-    assert config["slot_layouts"]["fci"]["variants"]["day"]["monitored_slot_ids"][-1] == "A75"
+    assert config["slot_layouts"]["fci"]["variants"]["day"]["display_slot_ids"][-1] == "A78"
+    assert config["slot_layouts"]["fci"]["variants"]["day"]["monitored_slot_ids"][-1] == "A78"
     assert config["slot_layouts"]["fci"]["variants"]["night"]["monitored_slot_ids"][-1] == "A77"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][-1] == "B40"
@@ -245,9 +247,10 @@ def test_status_endpoint_returns_parking_counts(monkeypatch):
         "total_slots": 2,
         "occupied_count": 1,
         "available_count": 1,
+        "occluded_count": 0,
         "slots": [
-            {"slot_id": "A1", "occupied": True},
-            {"slot_id": "A2", "occupied": False},
+            {"slot_id": "A1", "occupied": True, "status": "occupied"},
+            {"slot_id": "A2", "occupied": False, "status": "available"},
         ],
         "updated_at": None,
     }

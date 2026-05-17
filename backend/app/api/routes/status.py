@@ -209,6 +209,10 @@ def get_debug_visualization(
             image_path,
             media_type="image/jpeg",
             filename=filename,
+            headers={
+                "Cache-Control": "no-store, max-age=0",
+                "Pragma": "no-cache",
+            },
         )
     except ValueError as exc:
         status_code = 400 if "source must be" in str(exc) else 404

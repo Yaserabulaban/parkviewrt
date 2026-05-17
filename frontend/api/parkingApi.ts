@@ -16,7 +16,8 @@ export async function getParkingDemoStatus(
   }
   const queryString = params.toString();
   const response = await fetch(
-    `${API_BASE_URL}/api/status/${locationId}/demo${queryString ? `?${queryString}` : ""}`
+    `${API_BASE_URL}/api/status/${locationId}/demo${queryString ? `?${queryString}` : ""}`,
+    { cache: "no-store" }
   );
 
   if (!response.ok) {
@@ -42,7 +43,8 @@ export async function getParkingVideoSnapshotStatus(
     params.set("variant", variant);
   }
   const response = await fetch(
-    `${API_BASE_URL}/api/status/${locationId}/video-snapshot?${params.toString()}`
+    `${API_BASE_URL}/api/status/${locationId}/video-snapshot?${params.toString()}`,
+    { cache: "no-store" }
   );
 
   if (!response.ok) {
@@ -62,7 +64,8 @@ export async function getParkingVideoMetadata(
   }
   const queryString = params.toString();
   const response = await fetch(
-    `${API_BASE_URL}/api/video/${locationId}/metadata${queryString ? `?${queryString}` : ""}`
+    `${API_BASE_URL}/api/video/${locationId}/metadata${queryString ? `?${queryString}` : ""}`,
+    { cache: "no-store" }
   );
 
   if (!response.ok) {
@@ -88,7 +91,8 @@ export async function getParkingVideoSamplesStatus(
     params.set("variant", variant);
   }
   const response = await fetch(
-    `${API_BASE_URL}/api/status/${locationId}/video-samples?${params.toString()}`
+    `${API_BASE_URL}/api/status/${locationId}/video-samples?${params.toString()}`,
+    { cache: "no-store" }
   );
 
   if (!response.ok) {
@@ -102,7 +106,8 @@ export function getParkingDebugImageUrl(
   locationId: "fci" | "faie",
   frameIndex = 0,
   source: "video" | "static" = "video",
-  variant?: ParkingVideoVariant
+  variant?: ParkingVideoVariant,
+  version?: string
 ) {
   const params = new URLSearchParams({
     source,
@@ -110,6 +115,9 @@ export function getParkingDebugImageUrl(
   });
   if (variant) {
     params.set("variant", variant);
+  }
+  if (version) {
+    params.set("v", version);
   }
   return `${API_BASE_URL}/api/debug/${locationId}?${params.toString()}`;
 }

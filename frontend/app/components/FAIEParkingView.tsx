@@ -44,7 +44,8 @@ export default function FAIEParkingView() {
     'faie',
     debugFrameIndex,
     'video',
-    videoVariant
+    videoVariant,
+    lastUpdated ? String(lastUpdated.getTime()) : undefined
   );
   const statusSourceLabel =
     data?.source?.type === 'video_snapshot'

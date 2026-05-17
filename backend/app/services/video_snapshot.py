@@ -302,14 +302,24 @@ class VideoSnapshotService:
                 f"i{image_size_cache_value}",
             ]
         )
+        slot_key = self._get_slot_cache_key(location_id, variant)
         return (
             VIDEO_STATUS_CACHE_DIR
             / location_id
             / (variant or "default")
             / video_path.stem
+            / slot_key
             / tuning_key
             / f"frame_{frame_index}.json"
         )
+
+    def _get_slot_cache_key(self, location_id: str, variant: str | None) -> str:
+        slot_path = BASE_DIR / "data" / "slots" / f"{location_id}_{variant}_slots.json"
+        if not slot_path.exists():
+            return "slots_missing"
+
+        stat = slot_path.stat()
+        return f"slots_{stat.st_mtime_ns}_{stat.st_size}"
 
     def _cache_value(self, value, default_value) -> str:
         resolved_value = default_value if value is None else value

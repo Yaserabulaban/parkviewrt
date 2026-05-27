@@ -54,11 +54,8 @@ export default function FAIEParkingView() {
           ? 'Demo random'
           : 'Static image';
   const busy = loading || refreshing || demoLoading;
-  const monitoredSlotLimit = videoVariant === 'day' ? 22 : 18;
-  const monitoredSlotIds = new Set(
-    Array.from({ length: monitoredSlotLimit }, (_, index) => `B${index + 1}`)
-  );
-  const slotGroups = faieSlotGroups[videoVariant];
+  const monitoredSlotIds = new Set(faieMonitoredSlotIds[videoVariant]);
+  const slotGroups = faieSlotGroups;
   const renderSlot = (id: string, className = '') => (
     <ParkingSlot
       key={id}
@@ -77,7 +74,7 @@ export default function FAIEParkingView() {
     </div>
   );
   const renderMainCurbSlots = () => (
-    <div className="flex min-w-0 flex-nowrap items-center justify-between gap-10">
+    <div className="flex min-w-0 flex-nowrap items-center justify-center gap-1.5">
       {slotGroups.main.map((slotSet) => renderSlotRow(slotSet, 'shrink-0'))}
     </div>
   );
@@ -311,17 +308,15 @@ function rangeSlots(start: number, end: number) {
   return Array.from({ length: end - start + 1 }, (_, index) => `B${start + index}`);
 }
 
+const faieMonitoredSlotIds = {
+  day: [...rangeSlots(1, 16), ...rangeSlots(24, 31)],
+  night: [...rangeSlots(1, 15), ...rangeSlots(24, 26)],
+};
+
 const faieSlotGroups = {
-  day: {
-    main: [rangeSlots(1, 15), rangeSlots(23, 25)],
-    angled: rangeSlots(26, 31),
-    middle: [...rangeSlots(16, 22), ...rangeSlots(32, 40)],
-  },
-  night: {
-    main: [rangeSlots(1, 15), rangeSlots(19, 25)],
-    angled: rangeSlots(26, 31),
-    middle: [...rangeSlots(16, 18), ...rangeSlots(32, 40)],
-  },
+  main: [rangeSlots(1, 17)],
+  angled: rangeSlots(18, 23),
+  middle: rangeSlots(24, 40).reverse(),
 };
 
 const faieLayoutTuning = {
@@ -344,6 +339,6 @@ const faieLayoutTuning = {
   angledSlotsBottom: '18%',
   angledSlotsWidth: '11%',
   middleSlotsLeft: '20%',
-  middleSlotsRight: '30%',
+  middleSlotsRight: '36%',
   middleSlotsTop: '51%',
 };

@@ -56,19 +56,32 @@ def build_slot_layout(
     annotation_path: Path,
     location_label: str,
     annotation_order: list[int] | None = None,
+    slot_ids: list[str] | None = None,
 ) -> dict:
     annotations = ordered_annotations(
         annotation_path,
         location_label,
         annotation_order=annotation_order,
     )
+    resolved_slot_ids = slot_ids or [
+        f"{slot_prefix}{slot_number}"
+        for slot_number in range(1, len(annotations) + 1)
+    ]
+    if len(resolved_slot_ids) != len(annotations):
+        raise ValueError(
+            f"{location_label} has {len(annotations)} annotations but "
+            f"{len(resolved_slot_ids)} runtime slot ids"
+        )
+    if len(resolved_slot_ids) != len(set(resolved_slot_ids)):
+        raise ValueError(f"{location_label} runtime slot ids contain duplicates")
+
     slots = [
         make_slot(
-            f"{slot_prefix}{slot_number}",
+            slot_id,
             row,
             annotation_points(annotation),
         )
-        for slot_number, annotation in enumerate(annotations, start=1)
+        for slot_id, annotation in zip(resolved_slot_ids, annotations)
     ]
 
     return {

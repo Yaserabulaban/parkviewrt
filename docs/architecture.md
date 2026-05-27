@@ -99,8 +99,8 @@ PARKVIEWRT_BOX_THRESHOLD
 ```text
 FCI day display slots: A1-A77, monitored slots: A1-A75
 FCI night display/monitored slots: A1-A77
-FAIE day display slots: B1-B40, monitored slots: B1-B22
-FAIE night display slots: B1-B40, monitored slots: B1-B18
+FAIE day display slots: B1-B40, monitored slots: B1-B16 and B24-B31
+FAIE night display slots: B1-B40, monitored slots: B1-B15 and B24-B26
 ```
 
 ## Video and Cache Behavior

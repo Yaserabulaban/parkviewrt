@@ -360,7 +360,7 @@
       ]
     },
     {
-      "slot_id": "B16",
+      "slot_id": "B24",
       "row": "B",
       "shape": "polygon",
       "points": [
@@ -383,7 +383,7 @@
       ]
     },
     {
-      "slot_id": "B17",
+      "slot_id": "B25",
       "row": "B",
       "shape": "polygon",
       "points": [
@@ -406,7 +406,7 @@
       ]
     },
     {
-      "slot_id": "B18",
+      "slot_id": "B26",
       "row": "B",
       "shape": "polygon",
       "points": [

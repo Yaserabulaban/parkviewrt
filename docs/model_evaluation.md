@@ -16,7 +16,7 @@ Slot overlap threshold: 0.25
 Box overlap threshold: 0.20
 ```
 
-The original labelled static-image comparison used eight selected slots for each location, and those selected slots were treated as occupied for the comparison. The current runtime slot files are broader: FCI day monitors 75 slots, FCI night monitors 77 slots, FAIE day monitors 22 slots, and FAIE night monitors 18 slots.
+The original labelled static-image comparison used eight selected slots for each location, and those selected slots were treated as occupied for the comparison. The current runtime slot files are broader: FCI day monitors 78 slots, FCI night monitors 77 slots, FAIE day monitors 24 slots (`B1-B16`, `B24-B31`), and FAIE night monitors 18 slots (`B1-B15`, `B24-B26`).
 
 ## Selected Model
 

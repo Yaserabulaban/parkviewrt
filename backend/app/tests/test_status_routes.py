@@ -226,12 +226,14 @@ def test_config_endpoint_returns_detection_settings():
     assert config["slot_layouts"]["fci"]["variants"]["night"]["monitored_slot_ids"][-1] == "A77"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][0] == "B1"
     assert config["slot_layouts"]["faie"]["display_slot_ids"][-1] == "B40"
-    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][-1] == "B22"
-    assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 22
+    assert config["slot_layouts"]["faie"]["monitored_slot_ids"][-1] == "B31"
+    assert len(config["slot_layouts"]["faie"]["monitored_slot_ids"]) == 24
+    assert "B17" not in config["slot_layouts"]["faie"]["monitored_slot_ids"]
+    assert "B24" in config["slot_layouts"]["faie"]["monitored_slot_ids"]
     assert config["slot_layouts"]["faie"]["default_variant"] == "day"
-    assert config["slot_layouts"]["faie"]["variants"]["day"]["monitored_slot_ids"][-1] == "B22"
-    assert len(config["slot_layouts"]["faie"]["variants"]["day"]["monitored_slot_ids"]) == 22
-    assert config["slot_layouts"]["faie"]["variants"]["night"]["monitored_slot_ids"][-1] == "B18"
+    assert config["slot_layouts"]["faie"]["variants"]["day"]["monitored_slot_ids"][-1] == "B31"
+    assert len(config["slot_layouts"]["faie"]["variants"]["day"]["monitored_slot_ids"]) == 24
+    assert config["slot_layouts"]["faie"]["variants"]["night"]["monitored_slot_ids"][-1] == "B26"
     assert len(config["slot_layouts"]["faie"]["variants"]["night"]["monitored_slot_ids"]) == 18
 
 

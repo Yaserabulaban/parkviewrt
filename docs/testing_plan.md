@@ -67,8 +67,8 @@ Expected slot metadata:
 ```text
 FCI day display slots: 77, monitored slots: 75
 FCI night monitored slots: 77
-FAIE day display slots: 40, monitored slots: 22
-FAIE night display slots: 40, monitored slots: 18
+FAIE day display slots: 40, monitored slots: 24 (`B1-B16`, `B24-B31`)
+FAIE night display slots: 40, monitored slots: 18 (`B1-B15`, `B24-B26`)
 ```
 
 Video metadata:
@@ -103,7 +103,7 @@ Expected:
 ```text
 JSON response includes source.type = video_snapshot
 source.frame_index matches the requested frame or the last valid frame
-total_slots is 75 for FCI day, 77 for FCI night, 22 for FAIE day, and 18 for FAIE night
+total_slots is 78 for FCI day, 77 for FCI night, 24 for FAIE day, and 18 for FAIE night
 available_count + occupied_count = total_slots
 ```
 

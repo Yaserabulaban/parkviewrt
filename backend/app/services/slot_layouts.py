@@ -19,16 +19,25 @@ PARKING_SLOT_LAYOUTS = {
     },
     "faie": {
         "display_slot_ids": [f"B{index}" for index in range(1, 41)],
-        "monitored_slot_ids": [f"B{index}" for index in range(1, 23)],
+        "monitored_slot_ids": [
+            *[f"B{index}" for index in range(1, 17)],
+            *[f"B{index}" for index in range(24, 32)],
+        ],
         "default_variant": "day",
         "variants": {
             "day": {
                 "display_slot_ids": [f"B{index}" for index in range(1, 41)],
-                "monitored_slot_ids": [f"B{index}" for index in range(1, 23)],
+                "monitored_slot_ids": [
+                    *[f"B{index}" for index in range(1, 17)],
+                    *[f"B{index}" for index in range(24, 32)],
+                ],
             },
             "night": {
                 "display_slot_ids": [f"B{index}" for index in range(1, 41)],
-                "monitored_slot_ids": [f"B{index}" for index in range(1, 19)],
+                "monitored_slot_ids": [
+                    *[f"B{index}" for index in range(1, 16)],
+                    *[f"B{index}" for index in range(24, 27)],
+                ],
             },
         },
     },

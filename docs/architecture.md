@@ -51,7 +51,7 @@ frontend/
 6. `ParkingOccupancyService` runs YOLO on that frame.
 7. The detector keeps vehicle classes `car` and `truck`.
 8. Vehicle boxes are compared with variant-specific slot polygons such as `fci_day_slots.json` or `faie_night_slots.json`.
-9. The backend returns occupied/free slot status, counts, source metadata, and cache state.
+9. The backend returns occupied, available, or occluded slot status, counts, source metadata, and cache state.
 10. The frontend updates the visual parking layout.
 
 The static image endpoint still exists for compatibility, but the current dashboard flow uses video snapshots by default.
@@ -73,6 +73,9 @@ box overlap >= box_threshold
 detection center inside slot polygon
 slot centroid inside detection box
 ```
+
+Known consistently obscured FCI day slots can be returned as `occluded` when
+the detector does not see a vehicle clearly enough to mark them occupied.
 
 Current defaults:
 
@@ -97,11 +100,20 @@ PARKVIEWRT_BOX_THRESHOLD
 ## Slot Coverage
 
 ```text
-FCI day display slots: A1-A77, monitored slots: A1-A75
+FCI day display/monitored slots: A1-A78
 FCI night display/monitored slots: A1-A77
 FAIE day display slots: B1-B40, monitored slots: B1-B16 and B24-B31
 FAIE night display slots: B1-B40, monitored slots: B1-B15 and B24-B26
 ```
+
+FCI day numbering follows the visible dashboard lanes from left to right:
+`A1-A6` top-left, `A7-A25` first main lane, `A26-A47` return main lane,
+`A48-A65` lower-left lane, and `A66-A78` lower-right lane.
+
+FAIE uses the same displayed numbering layout for both variants: the main
+curb starts from `B1` left-to-right, the angled section displays `B18-B23`,
+and the final row displays `B24-B40` from right-to-left. Unmonitored spaces
+remain visible so the site layout stays consistent between day and night.
 
 ## Video and Cache Behavior
 
@@ -120,7 +132,19 @@ Supported extensions:
 .mkv
 ```
 
-The backend serves videos through `/api/video/{location_id}` with no-cache headers. FCI and FAIE accept `variant=day` and `variant=night`; the selected variant chooses the matching video folder and slot polygon file. The frontend appends a version token based on file size and last modified time so replacing a video with the same filename refreshes correctly in the browser.
+The backend serves videos through `/api/video/{location_id}` with no-cache headers. FCI and FAIE accept `variant=day` and `variant=night`; the selected variant chooses the matching video folder and slot polygon file. Detection and debug endpoints read the original recording, while the video preview prefers a matching `*_browser.mp4` file when present. The frontend appends a version token based on file size and last modified time so replacing a video with the same filename refreshes correctly in the browser.
+
+For browser playback, H.264 `.mp4` is the preferred local video format. HEVC
+`.MOV` files may still be readable by OpenCV for detection while rendering as
+a black or unsupported video in the browser. Generate browser copies for all
+four variant recordings with:
+
+```powershell
+py -3.11 backend/app/tools/prepare_browser_videos.py
+```
+
+The preparation tool reuses current H.264 playback files and only transcodes a
+variant when the source recording is newer or does not have a compatible copy.
 
 Frame status results are saved under:
 

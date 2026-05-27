@@ -48,6 +48,20 @@ Remove-Item -Recurse -Force backend/app/data/outputs/video_status_cache/faie
 
 The dashboard video itself uses cache-busting metadata, so the browser should load the new file after a refresh.
 
+For dashboard playback, prefer H.264 `.mp4` copies of local recordings. If a
+video frame can be extracted by OpenCV but its dashboard preview is black, the
+recording may be using a browser-incompatible HEVC profile and should be
+transcoded to H.264 `.mp4`. Prepare a consistent browser copy for each day and
+night recording with:
+
+```powershell
+py -3.11 backend/app/tools/prepare_browser_videos.py
+```
+
+The preview endpoint selects each `*_browser.mp4` copy; snapshot and debug
+endpoints continue reading the matching original annotation recording.
+Existing current H.264 browser copies are reused rather than transcoded again.
+
 ## Backend Manual Tests
 
 Health:
@@ -65,10 +79,12 @@ http://127.0.0.1:8001/api/config
 Expected slot metadata:
 
 ```text
-FCI day display slots: 77, monitored slots: 75
+FCI day display slots: 78, monitored slots: 78
 FCI night monitored slots: 77
 FAIE day display slots: 40, monitored slots: 24 (`B1-B16`, `B24-B31`)
 FAIE night display slots: 40, monitored slots: 18 (`B1-B15`, `B24-B26`)
+FCI day visual numbering runs left-to-right within each visible lane: `A1-A6`, `A7-A25`, `A26-A47`, `A48-A65`, `A66-A78`
+FAIE visual numbering: main curb `B1-B17`, angled spaces `B18-B23`, final row `B24-B40` from right to left
 ```
 
 Video metadata:
@@ -104,7 +120,7 @@ Expected:
 JSON response includes source.type = video_snapshot
 source.frame_index matches the requested frame or the last valid frame
 total_slots is 78 for FCI day, 77 for FCI night, 24 for FAIE day, and 18 for FAIE night
-available_count + occupied_count = total_slots
+available_count + occupied_count + occluded_count = total_slots
 ```
 
 Video debug:
@@ -122,6 +138,7 @@ Expected:
 JPEG loads in browser
 vehicle boxes are drawn in blue
 slot polygons are red or green
+known occluded FCI day slots can be amber
 summary bar shows thresholds and vehicle count
 slot polygons align with the current video camera angle
 ```
@@ -165,10 +182,9 @@ video preview shows the intended local video
 initial status comes from video frame 0
 playing the video updates the dashboard status as frame sync requests complete
 Refresh reloads video frame 0
-Video Snapshot samples the current reported frame
-Video Samples loads the majority-vote summary
 Detection Debug opens the current video-frame overlay
 Demo Random still works without video analysis
+Video snapshot and multi-frame sample endpoints remain available for backend testing
 ```
 
 ## Automated Checks

@@ -3,5 +3,6 @@ uvicorn
 ultralytics
 shapely
 opencv-python
+imageio-ffmpeg
 pytest
 httpx

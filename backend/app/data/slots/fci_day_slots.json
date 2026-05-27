@@ -162,6 +162,29 @@
       "shape": "polygon",
       "points": [
         [
+          44.81,
+          389.94
+        ],
+        [
+          62.34,
+          482.14
+        ],
+        [
+          0.65,
+          480.19
+        ],
+        [
+          0,
+          389.29
+        ]
+      ]
+    },
+    {
+      "slot_id": "A8",
+      "row": "A",
+      "shape": "polygon",
+      "points": [
+        [
           61.69,
           391.88
         ],
@@ -184,7 +207,7 @@
       ]
     },
     {
-      "slot_id": "A8",
+      "slot_id": "A9",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -207,7 +230,7 @@
       ]
     },
     {
-      "slot_id": "A9",
+      "slot_id": "A10",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -234,7 +257,7 @@
       ]
     },
     {
-      "slot_id": "A10",
+      "slot_id": "A11",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -257,7 +280,7 @@
       ]
     },
     {
-      "slot_id": "A11",
+      "slot_id": "A12",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -280,7 +303,7 @@
       ]
     },
     {
-      "slot_id": "A12",
+      "slot_id": "A13",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -303,7 +326,7 @@
       ]
     },
     {
-      "slot_id": "A13",
+      "slot_id": "A14",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -326,7 +349,7 @@
       ]
     },
     {
-      "slot_id": "A14",
+      "slot_id": "A15",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -349,7 +372,7 @@
       ]
     },
     {
-      "slot_id": "A15",
+      "slot_id": "A16",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -372,7 +395,7 @@
       ]
     },
     {
-      "slot_id": "A16",
+      "slot_id": "A17",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -395,7 +418,7 @@
       ]
     },
     {
-      "slot_id": "A17",
+      "slot_id": "A18",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -418,7 +441,7 @@
       ]
     },
     {
-      "slot_id": "A18",
+      "slot_id": "A19",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -441,7 +464,7 @@
       ]
     },
     {
-      "slot_id": "A19",
+      "slot_id": "A20",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -464,7 +487,7 @@
       ]
     },
     {
-      "slot_id": "A20",
+      "slot_id": "A21",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -491,7 +514,7 @@
       ]
     },
     {
-      "slot_id": "A21",
+      "slot_id": "A22",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -514,7 +537,7 @@
       ]
     },
     {
-      "slot_id": "A22",
+      "slot_id": "A23",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -537,7 +560,7 @@
       ]
     },
     {
-      "slot_id": "A23",
+      "slot_id": "A24",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -560,7 +583,7 @@
       ]
     },
     {
-      "slot_id": "A24",
+      "slot_id": "A25",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -583,57 +606,7 @@
       ]
     },
     {
-      "slot_id": "A25",
-      "row": "A",
-      "shape": "polygon",
-      "points": [
-        [
-          1640.91,
-          152.27
-        ],
-        [
-          1741.56,
-          231.49
-        ],
-        [
-          1786.36,
-          206.82
-        ],
-        [
-          1743.51,
-          171.75
-        ],
-        [
-          1680.52,
-          144.48
-        ]
-      ]
-    },
-    {
       "slot_id": "A26",
-      "row": "A",
-      "shape": "polygon",
-      "points": [
-        [
-          44.81,
-          389.94
-        ],
-        [
-          62.34,
-          482.14
-        ],
-        [
-          0.65,
-          480.19
-        ],
-        [
-          0,
-          389.29
-        ]
-      ]
-    },
-    {
-      "slot_id": "A27",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -656,7 +629,7 @@
       ]
     },
     {
-      "slot_id": "A28",
+      "slot_id": "A27",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -683,7 +656,7 @@
       ]
     },
     {
-      "slot_id": "A29",
+      "slot_id": "A28",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -706,7 +679,7 @@
       ]
     },
     {
-      "slot_id": "A30",
+      "slot_id": "A29",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -733,7 +706,7 @@
       ]
     },
     {
-      "slot_id": "A31",
+      "slot_id": "A30",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -756,7 +729,7 @@
       ]
     },
     {
-      "slot_id": "A32",
+      "slot_id": "A31",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -783,7 +756,7 @@
       ]
     },
     {
-      "slot_id": "A33",
+      "slot_id": "A32",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -806,7 +779,7 @@
       ]
     },
     {
-      "slot_id": "A34",
+      "slot_id": "A33",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -829,7 +802,7 @@
       ]
     },
     {
-      "slot_id": "A35",
+      "slot_id": "A34",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -852,7 +825,7 @@
       ]
     },
     {
-      "slot_id": "A36",
+      "slot_id": "A35",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -875,7 +848,7 @@
       ]
     },
     {
-      "slot_id": "A37",
+      "slot_id": "A36",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -898,7 +871,7 @@
       ]
     },
     {
-      "slot_id": "A38",
+      "slot_id": "A37",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -921,7 +894,7 @@
       ]
     },
     {
-      "slot_id": "A39",
+      "slot_id": "A38",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -944,7 +917,7 @@
       ]
     },
     {
-      "slot_id": "A40",
+      "slot_id": "A39",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -967,7 +940,7 @@
       ]
     },
     {
-      "slot_id": "A41",
+      "slot_id": "A40",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -990,7 +963,7 @@
       ]
     },
     {
-      "slot_id": "A42",
+      "slot_id": "A41",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -1013,7 +986,7 @@
       ]
     },
     {
-      "slot_id": "A43",
+      "slot_id": "A42",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -1036,7 +1009,7 @@
       ]
     },
     {
-      "slot_id": "A44",
+      "slot_id": "A43",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -1059,7 +1032,7 @@
       ]
     },
     {
-      "slot_id": "A45",
+      "slot_id": "A44",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -1082,7 +1055,7 @@
       ]
     },
     {
-      "slot_id": "A46",
+      "slot_id": "A45",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -1105,7 +1078,7 @@
       ]
     },
     {
-      "slot_id": "A47",
+      "slot_id": "A46",
       "row": "A",
       "shape": "polygon",
       "points": [
@@ -1128,6 +1101,33 @@
         [
           1590.91,
           167.86
+        ]
+      ]
+    },
+    {
+      "slot_id": "A47",
+      "row": "A",
+      "shape": "polygon",
+      "points": [
+        [
+          1640.91,
+          152.27
+        ],
+        [
+          1741.56,
+          231.49
+        ],
+        [
+          1786.36,
+          206.82
+        ],
+        [
+          1743.51,
+          171.75
+        ],
+        [
+          1680.52,
+          144.48
         ]
       ]
     },

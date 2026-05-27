@@ -20,7 +20,7 @@ DEFAULT_VIDEO_VARIANTS = {
     "faie": "day",
 }
 KNOWN_OCCLUDED_SLOTS = {
-    ("fci", "day"): {"A9", "A26", "A50", "A60", "A61", "A62", "A64"},
+    ("fci", "day"): {"A7", "A10", "A50", "A60", "A61", "A62", "A64"},
 }
 
 

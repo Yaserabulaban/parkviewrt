@@ -13,6 +13,15 @@ FAIE_NIGHT_RUNTIME_SLOT_IDS = [
     *[f"B{index}" for index in range(1, 16)],
     *[f"B{index}" for index in range(24, 27)],
 ]
+FAIE_NIGHT_ANNOTATION_ORDER = [
+    6,
+    5,
+    4,
+    3,
+    2,
+    1,
+    *range(7, 19),
+]
 
 VARIANTS = {
     "day": {
@@ -25,6 +34,7 @@ VARIANTS = {
         "annotation_path": SLOTS_DIR / "faie_night_annotations.json",
         "output_path": SLOTS_DIR / "faie_night_slots.json",
         "layout_type": "video_night_frame",
+        "annotation_order": FAIE_NIGHT_ANNOTATION_ORDER,
         "slot_ids": FAIE_NIGHT_RUNTIME_SLOT_IDS,
     },
 }

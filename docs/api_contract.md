@@ -96,12 +96,14 @@ Example response:
 ```json
 {
   "location_id": "fci",
-  "total_slots": 75,
+  "total_slots": 78,
   "occupied_count": 61,
-  "available_count": 14,
+  "available_count": 10,
+  "occluded_count": 7,
   "slots": [
-    { "slot_id": "A1", "occupied": true },
-    { "slot_id": "A2", "occupied": false }
+    { "slot_id": "A1", "occupied": true, "status": "occupied" },
+    { "slot_id": "A2", "occupied": false, "status": "available" },
+    { "slot_id": "A10", "occupied": false, "status": "occluded" }
   ]
 }
 ```
@@ -150,8 +152,8 @@ Example response:
 {
   "location_id": "fci",
   "variant": "day",
-  "video_path": "backend/app/data/videos/fci/fci_video.mov",
-  "file_name": "fci_video.mov",
+  "video_path": "backend/app/data/videos/fci/day/fci_video_browser.mp4",
+  "file_name": "fci_video_browser.mp4",
   "file_size": 668794432,
   "last_modified": 1778094931.0,
   "frame_count": 19522,
@@ -182,6 +184,12 @@ Supported video extensions:
 .mov
 .mkv
 ```
+
+For reliable browser playback, the endpoint prefers a matching H.264
+`*_browser.mp4` copy when one has been generated. Snapshot and debug analysis
+continue to use the original recording so playback transcoding does not change
+detection input. OpenCV may be able to analyze HEVC `.MOV` recordings that a
+browser cannot render correctly.
 
 ## Video Snapshot Status
 
@@ -218,16 +226,17 @@ Example response:
 ```json
 {
   "location_id": "fci",
-  "total_slots": 75,
+  "total_slots": 78,
   "occupied_count": 61,
-  "available_count": 14,
+  "available_count": 10,
+  "occluded_count": 7,
   "slots": [
-    { "slot_id": "A1", "occupied": true }
+    { "slot_id": "A1", "occupied": true, "status": "occupied" }
   ],
   "source": {
     "type": "video_snapshot",
     "variant": "day",
-    "video_path": "backend/app/data/videos/fci/fci_video.mov",
+    "video_path": "backend/app/data/videos/fci/day/fci_video.MOV",
     "frame_index": 300,
     "cached": false
   }
@@ -296,6 +305,7 @@ Debug image meaning:
 Blue boxes: YOLO vehicle detections
 Red slot polygons: occupied slots
 Green slot polygons: available slots
+Amber slot polygons: known occluded slots whose vehicles are not detected
 Sxx% label: slot-overlap percentage
 Summary bar: location, slot counts, vehicle count, and active thresholds
 ```

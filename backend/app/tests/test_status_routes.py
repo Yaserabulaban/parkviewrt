@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 from app.api.routes import status as status_routes
 from app.main import app
 from app.services.occupancy import ParkingOccupancyService
+from app.services import video_snapshot as video_snapshot_module
+from app.services.video_snapshot import VideoSnapshotService
 
 
 class FakeOccupancyService:
@@ -464,6 +466,32 @@ def test_video_metadata_endpoint_returns_frame_details(monkeypatch):
         "fps": 30.0,
         "duration_seconds": 4.0,
     }
+
+
+def test_video_cache_key_distinguishes_files_with_the_same_stem(tmp_path):
+    mov_path = tmp_path / "faie_video.MOV"
+    mp4_path = tmp_path / "faie_video.mp4"
+    mov_path.write_bytes(b"mov")
+    mp4_path.write_bytes(b"mp4-content")
+
+    service = VideoSnapshotService(None)
+
+    assert service._get_video_cache_key(mov_path) != service._get_video_cache_key(mp4_path)
+
+
+def test_browser_video_copy_is_used_only_for_playback(tmp_path, monkeypatch):
+    source_dir = tmp_path / "fci" / "night"
+    source_dir.mkdir(parents=True)
+    source_path = source_dir / "fci_video.mov"
+    browser_path = source_dir / "fci_video_browser.mp4"
+    source_path.write_bytes(b"source")
+    browser_path.write_bytes(b"browser")
+    monkeypatch.setattr(video_snapshot_module, "VIDEOS_DIR", tmp_path)
+
+    service = VideoSnapshotService(None)
+
+    assert service._find_video_path("fci", "night") == source_path
+    assert service._find_playback_video_path("fci", "night") == browser_path
 
 
 def test_fci_video_variant_is_forwarded(monkeypatch):

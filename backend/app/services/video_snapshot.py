@@ -8,7 +8,8 @@ from app.services.occupancy import BASE_DIR, ParkingOccupancyService
 
 VIDEOS_DIR = BASE_DIR / "data" / "videos"
 VIDEO_STATUS_CACHE_DIR = BASE_DIR / "data" / "outputs" / "video_status_cache"
-SUPPORTED_VIDEO_EXTENSIONS = (".mp4", ".avi", ".mov", ".mkv")
+SOURCE_VIDEO_EXTENSIONS = (".mov", ".avi", ".mkv", ".mp4")
+BROWSER_VIDEO_SUFFIX = "_browser.mp4"
 
 
 class VideoSnapshotService:
@@ -101,7 +102,7 @@ class VideoSnapshotService:
             normalized_location_id,
             variant,
         )
-        return self._find_video_path(normalized_location_id, normalized_variant)
+        return self._find_playback_video_path(normalized_location_id, normalized_variant)
 
     def get_video_metadata(self, location_id: str, variant: str | None = None) -> dict:
         normalized_location_id = location_id.lower()
@@ -109,7 +110,10 @@ class VideoSnapshotService:
             normalized_location_id,
             variant,
         )
-        video_path = self._find_video_path(normalized_location_id, normalized_variant)
+        video_path = self._find_playback_video_path(
+            normalized_location_id,
+            normalized_variant,
+        )
         metadata = self._get_video_metadata(video_path)
         fps = metadata["fps"]
         frame_count = metadata["frame_count"]
@@ -227,14 +231,14 @@ class VideoSnapshotService:
         if variant:
             variant_dir = location_dir / variant
             if variant_dir.exists():
-                for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                for extension in SOURCE_VIDEO_EXTENSIONS:
                     candidates.extend(sorted(variant_dir.glob(f"*{extension}")))
 
             if location_dir.exists():
-                for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                for extension in SOURCE_VIDEO_EXTENSIONS:
                     candidates.extend(sorted(location_dir.glob(f"*{variant}*{extension}")))
 
-            for extension in SUPPORTED_VIDEO_EXTENSIONS:
+            for extension in SOURCE_VIDEO_EXTENSIONS:
                 candidates.extend(sorted(VIDEOS_DIR.glob(f"{location_id}_{variant}*{extension}")))
                 archive_dir = VIDEOS_DIR / "archive"
                 if archive_dir.exists():
@@ -243,10 +247,11 @@ class VideoSnapshotService:
                     )
 
             if variant == "day" and location_dir.exists():
-                for extension in SUPPORTED_VIDEO_EXTENSIONS:
+                for extension in SOURCE_VIDEO_EXTENSIONS:
                     candidates.extend(sorted(location_dir.glob(f"{location_id}_video{extension}")))
                     candidates.extend(sorted(location_dir.glob(f"video{extension}")))
 
+            candidates = self._exclude_browser_copies(candidates)
             if candidates:
                 return candidates[0]
 
@@ -255,17 +260,37 @@ class VideoSnapshotService:
             )
 
         if location_dir.exists():
-            for extension in SUPPORTED_VIDEO_EXTENSIONS:
+            for extension in SOURCE_VIDEO_EXTENSIONS:
                 candidates.extend(sorted(location_dir.glob(f"*{extension}")))
 
         if not candidates:
-            for extension in SUPPORTED_VIDEO_EXTENSIONS:
+            for extension in SOURCE_VIDEO_EXTENSIONS:
                 candidates.extend(sorted(VIDEOS_DIR.glob(f"{location_id}*{extension}")))
 
+        candidates = self._exclude_browser_copies(candidates)
         if not candidates:
             raise FileNotFoundError(f"No video found for location: {location_id}")
 
         return candidates[0]
+
+    def _find_playback_video_path(
+        self,
+        location_id: str,
+        variant: str | None = None,
+    ) -> Path:
+        source_path = self._find_video_path(location_id, variant)
+        browser_path = source_path.with_name(f"{source_path.stem}{BROWSER_VIDEO_SUFFIX}")
+        if browser_path.exists():
+            return browser_path
+
+        return source_path
+
+    def _exclude_browser_copies(self, candidates: list[Path]) -> list[Path]:
+        return [
+            path
+            for path in candidates
+            if not path.name.lower().endswith(BROWSER_VIDEO_SUFFIX)
+        ]
 
     def _get_status_cache_path(
         self,
@@ -303,15 +328,21 @@ class VideoSnapshotService:
             ]
         )
         slot_key = self._get_slot_cache_key(location_id, variant)
+        video_key = self._get_video_cache_key(video_path)
         return (
             VIDEO_STATUS_CACHE_DIR
             / location_id
             / (variant or "default")
-            / video_path.stem
+            / video_key
             / slot_key
             / tuning_key
             / f"frame_{frame_index}.json"
         )
+
+    def _get_video_cache_key(self, video_path: Path) -> str:
+        stat = video_path.stat()
+        extension = video_path.suffix.lower().lstrip(".") or "video"
+        return f"{video_path.stem}_{extension}_{stat.st_mtime_ns}_{stat.st_size}"
 
     def _get_slot_cache_key(self, location_id: str, variant: str | None) -> str:
         slot_path = BASE_DIR / "data" / "slots" / f"{location_id}_{variant}_slots.json"

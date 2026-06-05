@@ -27,6 +27,13 @@ $env:PYTHONPATH='backend'
 py -3.11 colab/evaluate_model_accuracy.py
 ```
 
+To tune detection and slot-overlap thresholds for the selected model:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 colab/tune_thresholds.py
+```
+
 The comparison uses:
 
 ```text
@@ -116,6 +123,13 @@ model_accuracy_frames.csv
 model_accuracy_slots.csv
 ```
 
+For threshold tuning, use:
+
+```text
+threshold_tuning_summary.csv
+threshold_tuning_mismatches.csv
+```
+
 These files compare predictions against the verified labels in:
 
 ```text
@@ -136,6 +150,14 @@ Reason:
 yolo11n.pt achieved the best verified validation-frame accuracy, had perfect
 occupied recall on the reviewed frames, and avoided YOLO12's higher latency.
 YOLO26 should be retested again if the validation set is expanded.
+```
+
+The threshold sweep keeps the current backend defaults:
+
+```text
+PARKVIEWRT_CONFIDENCE=0.20
+PARKVIEWRT_SLOT_THRESHOLD=0.25
+PARKVIEWRT_BOX_THRESHOLD=0.20
 ```
 
 ## Notebook

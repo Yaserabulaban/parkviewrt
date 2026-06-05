@@ -98,6 +98,51 @@ indices from this CSV, so generated frame images can be deleted after review.
 
 `yolo11n.pt` had no mismatched slot statuses in this reviewed validation set.
 
+## Threshold Tuning
+
+The selected `yolo11n.pt` model was also tested with a threshold grid so the
+backend defaults could be justified instead of chosen arbitrarily.
+
+```text
+Confidence thresholds tested: 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40
+Slot overlap thresholds tested: 0.15, 0.20, 0.25, 0.30, 0.35, 0.40
+Box overlap thresholds tested: 0.10, 0.15, 0.20, 0.25, 0.30
+Total combinations: 210
+Validation set: 12 frames, 591 verified slot labels
+```
+
+Summary by confidence threshold:
+
+| Confidence | Best Correct Slots | Best Accuracy | Perfect Combinations |
+| --- | --- | --- | --- |
+| 0.10 | 586 / 591 | 99.15% | 0 |
+| 0.15 | 590 / 591 | 99.83% | 0 |
+| 0.20 | 591 / 591 | 100.00% | 30 |
+| 0.25 | 586 / 591 | 99.15% | 0 |
+| 0.30 | 579 / 591 | 97.97% | 0 |
+| 0.35 | 575 / 591 | 97.29% | 0 |
+| 0.40 | 564 / 591 | 95.43% | 0 |
+
+Selected thresholds:
+
+```text
+Confidence threshold: 0.20
+Slot overlap threshold: 0.25
+Box overlap threshold: 0.20
+```
+
+Reason:
+
+```text
+The current production values reached 591/591 correct labels with no false
+available, false occupied, or false occluded slot statuses. The sweep showed
+that confidence=0.20 is the stable point for the current videos: lower
+confidence introduces extra detections, while higher confidence begins missing
+occupied slots. Several slot/box threshold combinations also scored perfectly at
+confidence=0.20, so the existing slot=0.25 and box=0.20 values were kept because
+they are already validated, moderate, and stable in the current backend.
+```
+
 ## Model Summary
 
 | Model | Variants | Total Detections | Occupied Slots | Available Slots | Occluded Slots | Avg Pipeline Time (ms) |

@@ -130,8 +130,8 @@ py -3.11 backend/app/tools/cache_video_status.py fci --variant day
 
 `README.md`: this project guide.
 
-`.env.example`: optional backend detection settings. Copy values into your
-environment if you want to override defaults.
+`.env.example`: optional backend detection settings for overriding defaults in
+the local environment.
 
 `.gitignore`: keeps generated outputs, local videos, model weights, virtual
 environments, and frontend build folders out of Git.
@@ -353,12 +353,18 @@ future dataset notes.
 ```text
 colab/
   README.md
+  evaluate_models.py
+  evaluate_model_accuracy.py
+  tune_thresholds.py
   generate_evaluation_report.py
+  ground_truth/
 ```
 
-The Colab area is for model comparison and future training/evaluation work.
-Generated CSV files and debug images are written under `colab/outputs/`, which
-is ignored by Git.
+The Colab area is for reproducible model comparison, verified accuracy testing,
+and threshold tuning. Generated CSV files and debug images are written under
+`colab/outputs/`, which is ignored by Git. The reviewed validation labels are
+kept under `colab/ground_truth/` so the evaluation can be rerun after generated
+outputs are cleaned.
 
 ## Runtime Workflow
 
@@ -478,8 +484,32 @@ PARKVIEWRT_BOX_THRESHOLD=0.20
 ```
 
 Use `.env.example` as a reference for environment variables. Threshold tuning is
-still a planned evaluation task, so record any tested values before changing
-defaults permanently.
+complete for the current validation set, and the existing defaults are retained
+because they achieved `591/591` correct verified slot labels.
+
+## Evaluation Evidence
+
+Model and threshold evidence is documented in:
+
+```text
+docs/model_evaluation.md
+```
+
+Current selected values:
+
+```text
+YOLO model: yolo11n.pt
+Confidence threshold: 0.20
+Slot overlap threshold: 0.25
+Box overlap threshold: 0.20
+```
+
+The verified validation set contains 12 video frames and 591 slot-status labels
+under:
+
+```text
+colab/ground_truth/slot_status_ground_truth.csv
+```
 
 ## Troubleshooting
 
@@ -555,10 +585,11 @@ Replace `fci` with `faie` and `day` with `night` as needed.
 
 ## Current Remaining Work
 
-- Expand this README further if new notebooks, scripts, or deployment steps are
-  added.
-- Add more comments only where future maintenance is likely to be confusing.
-- Tune thresholds and record report-ready metrics.
-- Compare suitable YOLO versions on representative final video frames.
-- Build a fixed ground-truth evaluation set for reproducible model and
-  threshold comparison.
+- Write the final FYP2 report using `docs/model_evaluation.md`,
+  `docs/architecture.md`, and `docs/testing_plan.md` as source material.
+- During the final demo, run the dashboard manually for FCI day, FCI night,
+  FAIE day, and FAIE night to confirm browser playback and debug overlays.
+- If any final video is retaken or relabeled, regenerate the matching runtime
+  slot JSON and rerun model accuracy plus threshold tuning.
+- Add deployment notes only if the project moves beyond local FastAPI/Vite
+  execution.

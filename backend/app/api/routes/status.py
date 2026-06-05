@@ -94,6 +94,9 @@ def get_video_snapshot_status(
     confidence: float | None = None,
     image_size: int | None = None,
 ):
+    # This is the dashboard's main live-analysis endpoint. The frontend sends
+    # the current video frame index, and the backend analyzes that exact source
+    # frame so the displayed video and occupancy state stay aligned.
     try:
         return video_snapshot_service.get_snapshot_status(
             location_id,
@@ -145,6 +148,8 @@ def get_video_sampled_status(
 
 @router.get("/video/{location_id}/metadata")
 def get_parking_video_metadata(location_id: str, variant: str | None = None):
+    # Metadata is based on the browser-playback file when available. That keeps
+    # frontend frame-index calculations tied to the displayed video element.
     try:
         return video_snapshot_service.get_video_metadata(location_id, variant=variant)
     except FileNotFoundError as exc:
@@ -179,6 +184,9 @@ def get_debug_visualization(
     confidence: float | None = None,
     image_size: int | None = None,
 ):
+    # Debug images are intentionally served as files instead of JSON so they can
+    # be opened directly from the dashboard and used as visual evidence during
+    # slot-label validation.
     try:
         if source == "static":
             image_path = occupancy_service.create_debug_image(

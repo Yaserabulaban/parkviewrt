@@ -6,6 +6,10 @@ custom YOLO training is part of the active implementation yet.
 
 ## Current Local Workflow
 
+These scripts are used for report evidence, not for the live dashboard runtime.
+Run them when model choice, accuracy, or threshold values need to be justified
+again after a new video capture or slot relabeling.
+
 Run the comparison from the project root:
 
 ```powershell
@@ -107,8 +111,8 @@ occluded_count
 inference_ms_mean
 ```
 
-Use `model_comparison_slots.csv` when you need to inspect individual slot
-status, overlap ratio, box overlap ratio, and occupied reason.
+Use `model_comparison_slots.csv` for individual slot status, overlap ratio, box
+overlap ratio, and occupied reason.
 
 Use the debug images to visually confirm whether the detections and slot
 polygons match the parking area correctly. This is still important because the
@@ -163,11 +167,13 @@ PARKVIEWRT_BOX_THRESHOLD=0.20
 ## Notebook
 
 ```text
-evaluate_model.ipynb
+No notebook is currently kept in this folder.
 ```
 
-The notebook is retained for Colab-style experiments, but the local script is
-the current source of truth because it uses the latest runtime day/night files.
+The old notebook was removed because the local scripts are clearer, easier to
+rerun from the current repository, and use the latest runtime day/night files.
+Create a new notebook later only if custom training or Colab GPU experiments
+become necessary.
 
 ## Model Weights
 

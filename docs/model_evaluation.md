@@ -182,16 +182,30 @@ they are already validated, moderate, and stable in the current backend.
 | FAIE | day | 24 | 34 | 14 | 10 | 0 | B8 B13 B14 B15 B16 B24 B25 B26 B27 B29 | - |
 | FAIE | night | 18 | 3 | 0 | 18 | 0 | B1 B2 B3 B4 B5 B6 B7 B8 B9 B10 B11 B12 B13 B14 B15 B24 B25 B26 | - |
 
-## Generated Artifacts
+## Evaluation Artifacts
 
 ```text
 colab/outputs/model_comparison_summary.csv
 colab/outputs/model_comparison_slots.csv
 colab/outputs/debug_images/
+colab/outputs/model_accuracy_summary.csv
+colab/outputs/model_accuracy_frames.csv
+colab/outputs/model_accuracy_slots.csv
+colab/outputs/threshold_tuning_summary.csv
+colab/outputs/threshold_tuning_mismatches.csv
 ```
 
 The `colab/outputs/` folder is ignored by Git because it contains generated
 experiment artifacts.
+
+The reviewed ground-truth labels are kept in Git:
+
+```text
+colab/ground_truth/slot_status_ground_truth.csv
+```
+
+This allows model accuracy and threshold tuning to be rerun without keeping
+generated frame images or CSV outputs in the repository.
 
 ## Sources For Model Choice
 

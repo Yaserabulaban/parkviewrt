@@ -207,11 +207,9 @@ only instead of mixing nano/small/medium sizes.
 
 ## Important Limitation
 
-These results are measured backend behavior, not final accuracy. The current
-four reference images do not include manually verified ground-truth status for
-every monitored slot. Therefore, the tables below should be used to justify a
-practical model choice, then revisited once a labelled validation set of video
-frames is prepared.
+This generated section summarizes static-reference-image behavior. The final
+project evidence should also include the verified video-frame accuracy and
+threshold tuning results from `docs/model_evaluation.md`.
 
 ## Selected Model
 
@@ -224,11 +222,9 @@ frames is prepared.
 Reason:
 
 ```text
-It was the fastest model in the current run, matched YOLO26 on total detections,
-detected more occupied FAIE day slots than YOLO26, and avoided the large latency
-increase seen with YOLO12. YOLO26 remains the first model to retest when a
-ground-truth validation set is available, but this run does not show enough
-benefit to replace the stable current model.
+The selected model is kept as the production baseline for this static
+comparison. Final model justification should use this comparison together with
+the verified frame-accuracy and threshold-tuning evidence.
 ```
 
 ## Model Summary
@@ -243,7 +239,7 @@ benefit to replace the stable current model.
 
 {selected_detail_table}
 
-## Generated Artifacts
+## Evaluation Artifacts
 
 ```text
 colab/outputs/model_comparison_summary.csv

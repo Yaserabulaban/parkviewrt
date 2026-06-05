@@ -209,6 +209,30 @@ Optional backend syntax check:
 py -3.11 -c "import ast, pathlib; [ast.parse(path.read_text(encoding='utf-8')) for path in pathlib.Path('backend/app').rglob('*.py')]; print('syntax ok')"
 ```
 
+## Current Final Validation Result
+
+The latest full-system validation covered automated tests, build output, video
+metadata, video snapshot status, debug overlays, and browser-playback files.
+
+```text
+Backend tests: 23 passed
+Frontend production build: passed
+FCI day metadata/snapshot/debug: passed
+FCI night metadata/snapshot/debug: passed
+FAIE day metadata/snapshot/debug: passed
+FAIE night metadata/snapshot/debug: passed
+Browser playback copies: present and readable for all four variants
+```
+
+Expected monitored slot counts during this validation:
+
+```text
+FCI day: 78
+FCI night: 77
+FAIE day: 24
+FAIE night: 18
+```
+
 ## Known Testing Risks
 
 ```text

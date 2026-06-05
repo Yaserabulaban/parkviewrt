@@ -151,6 +151,9 @@ def detect_for_confidence(
     frame_data: dict[str, dict],
     confidence: float,
 ) -> dict[str, dict]:
+    # YOLO inference is the slow part of tuning. Run it once for each
+    # confidence threshold, then reuse those detections while sweeping the
+    # cheaper polygon-overlap thresholds.
     detections_by_frame = {}
     for frame_id, data in frame_data.items():
         start_time = time.perf_counter()
@@ -286,6 +289,9 @@ def evaluate_thresholds(
 
 
 def rank_key(row: dict) -> tuple:
+    # Prefer safety before strict speed: an occupied slot incorrectly marked
+    # available is worse for the dashboard than a conservative occupied/occluded
+    # result. Ties keep the current moderate thresholds near the top.
     return (
         row["accuracy"],
         row["occupied_recall"],

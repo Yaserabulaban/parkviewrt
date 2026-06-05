@@ -180,6 +180,8 @@ class VideoSnapshotService:
         confidence_threshold: float | None = None,
         image_size: int | None = None,
     ) -> dict:
+        # Multi-frame sampling is a backend evaluation/debug helper. The live
+        # dashboard uses single frame snapshots so playback stays responsive.
         if sample_count < 1 or sample_count > 20:
             raise ValueError("sample_count must be between 1 and 20")
         if start_frame < 0:
@@ -229,6 +231,9 @@ class VideoSnapshotService:
         }
 
     def _find_video_path(self, location_id: str, variant: str | None = None) -> Path:
+        # Source selection prefers variant folders first, then legacy fallback
+        # names. Browser copies are excluded here because slot labels were drawn
+        # against the original recordings.
         location_dir = VIDEOS_DIR / location_id
         candidates = []
 
@@ -284,6 +289,8 @@ class VideoSnapshotService:
     ) -> Path:
         source_path = self._find_video_path(location_id, variant)
         browser_path = source_path.with_name(f"{source_path.stem}{BROWSER_VIDEO_SUFFIX}")
+        # The playback copy exists only for browser compatibility. Detection,
+        # debug, and cache keys still use the original source video path.
         if browser_path.exists():
             return browser_path
 
@@ -487,6 +494,8 @@ class VideoSnapshotService:
         return samples
 
     def _summarize_samples(self, samples: list[dict]) -> dict:
+        # Majority vote smooths short-term detection flicker when a caller asks
+        # for sampled status instead of a single exact frame.
         sample_count = len(samples)
         latest_sample = samples[-1]
         slot_ids = [slot["slot_id"] for slot in latest_sample["slots"]]

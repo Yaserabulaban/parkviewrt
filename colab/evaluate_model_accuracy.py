@@ -91,6 +91,9 @@ def analyze_frame(
     variant: str,
     frame_index: int,
 ) -> tuple[dict, float]:
+    # Accuracy is measured against the original videos, not saved extracted
+    # images. This keeps the validation repeatable after generated outputs are
+    # cleaned from backend/app/data/outputs.
     video_path = video_service._find_video_path(location_id, variant)
     frame, actual_frame_index = video_service._read_frame(video_path, frame_index)
     if actual_frame_index != frame_index:
@@ -193,6 +196,8 @@ def run_accuracy(
         model_slot_rows = []
         print(f"Evaluating accuracy for {model_name}...")
 
+        # Each frame_id groups all slot labels for one reviewed video frame.
+        # The first row carries the shared location, variant, and frame index.
         for frame_id, expected_rows in ground_truth.items():
             first_row = expected_rows[0]
             location_id = first_row["location_id"]

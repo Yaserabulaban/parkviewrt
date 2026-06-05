@@ -319,6 +319,8 @@ const faieSlotGroups = {
   middle: rangeSlots(24, 40).reverse(),
 };
 
+// These percentages tune the diagram only. Real detection still depends on the
+// backend runtime polygons in backend/app/data/slots/faie_*_slots.json.
 const faieLayoutTuning = {
   roadLeft: '9%',
   roadRight: '12%',

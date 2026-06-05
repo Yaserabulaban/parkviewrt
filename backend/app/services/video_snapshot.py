@@ -8,6 +8,9 @@ from app.services.occupancy import BASE_DIR, ParkingOccupancyService
 
 VIDEOS_DIR = BASE_DIR / "data" / "videos"
 VIDEO_STATUS_CACHE_DIR = BASE_DIR / "data" / "outputs" / "video_status_cache"
+# Detection/debug should read the original labeled recording first. Browser
+# preview can use a separate H.264 copy because some HEVC phone videos render as
+# black in the browser even though OpenCV can analyze them.
 SOURCE_VIDEO_EXTENSIONS = (".mov", ".avi", ".mkv", ".mp4")
 BROWSER_VIDEO_SUFFIX = "_browser.mp4"
 
@@ -102,6 +105,7 @@ class VideoSnapshotService:
             normalized_location_id,
             variant,
         )
+        # This is the browser-facing path, not the detection source path.
         return self._find_playback_video_path(normalized_location_id, normalized_variant)
 
     def get_video_metadata(self, location_id: str, variant: str | None = None) -> dict:
@@ -329,6 +333,8 @@ class VideoSnapshotService:
         )
         slot_key = self._get_slot_cache_key(location_id, variant)
         video_key = self._get_video_cache_key(video_path)
+        # Include both video and slot-file identity so replacing a recording or
+        # relabeling polygons does not accidentally reuse stale frame results.
         return (
             VIDEO_STATUS_CACHE_DIR
             / location_id

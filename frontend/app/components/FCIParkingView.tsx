@@ -303,6 +303,8 @@ const fciVariantLayouts = {
     slotGroups: fciVisualSlotGroups,
   },
   night: {
+    // Keep the same visual row plan as day; A78 renders as unmonitored when the
+    // night runtime JSON stops at A77.
     monitoredSlots: 77,
     slotGroups: fciVisualSlotGroups,
   },

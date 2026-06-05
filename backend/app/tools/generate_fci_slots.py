@@ -8,6 +8,7 @@ SLOTS_DIR = BASE_DIR / "data" / "slots"
 
 # Label Studio exports annotations by creation order. These values are source
 # polygon ids, not displayed slot numbers; their positions generate A1-A78.
+# Each nested list is a visible dashboard lane ordered left-to-right.
 FCI_DAY_ANNOTATION_ROW_ORDER = [
     [1, 2, 3, 4, 5, 6],
     [11, 7, 8, 9, 15, 17, 20, 21, 23, 25, 27, 29, 31, 33, 34, 38, 39, 41, 42],
@@ -16,8 +17,8 @@ FCI_DAY_ANNOTATION_ROW_ORDER = [
     [66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78],
 ]
 
-# Label Studio exports annotations by creation order. This order maps the
-# FCI night polygons into the parking-row order used by the dashboard.
+# FCI night has a different camera angle and only A1-A77, so its source polygon
+# ids need a separate lane mapping instead of reusing the day order.
 FCI_NIGHT_ANNOTATION_ROW_ORDER = [
     [1, 2, 3, 4, 5, 6],
     [7, 8, 17, 18, 19, 20, 21, 22, 23, 24, 25, 12, 26, 27, 28, 29, 30, 31, 32, 33],

@@ -10,6 +10,8 @@ import type {
 
 type StatusMode = "demo" | "video_snapshot";
 const DEFAULT_VIDEO_FRAME_INDEX = 0;
+// Avoid firing YOLO analysis for tiny playback movements; video status is
+// expensive and does not need to update on every rendered frame.
 const MIN_SYNC_FRAME_DISTANCE = 15;
 
 export function useParkingStatus(

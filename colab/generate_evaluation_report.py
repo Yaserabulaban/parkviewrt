@@ -27,42 +27,6 @@ def to_int(value: str) -> int:
     return int(float(value))
 
 
-def summarize_models(summary_rows: list[dict], slot_rows: list[dict]) -> list[dict]:
-    grouped_summary = defaultdict(list)
-    grouped_slots = defaultdict(list)
-
-    for row in summary_rows:
-        grouped_summary[row["model"]].append(row)
-
-    for row in slot_rows:
-        grouped_slots[row["model"]].append(row)
-
-    model_summaries = []
-    for model_name in sorted(grouped_summary):
-        rows = grouped_summary[model_name]
-        slots = grouped_slots[model_name]
-        model_summaries.append(
-            {
-                "model": model_name,
-                "locations": len(rows),
-                "total_detections": sum(to_int(row["detections"]) for row in rows),
-                "average_accuracy": mean(to_float(row["slot_accuracy"]) for row in rows),
-                "average_inference_ms": mean(to_float(row["inference_ms"]) for row in rows),
-                "minimum_slot_overlap": min(to_float(row["slot_overlap"]) for row in slots),
-                "minimum_box_overlap": min(to_float(row["box_overlap"]) for row in slots),
-            }
-        )
-
-    return sorted(
-        model_summaries,
-        key=lambda row: (
-            -row["average_accuracy"],
-            row["average_inference_ms"],
-            -row["minimum_slot_overlap"],
-        ),
-    )
-
-
 def format_table(headers: list[str], rows: list[list[str]]) -> str:
     header_line = "| " + " | ".join(headers) + " |"
     separator = "| " + " | ".join("---" for _ in headers) + " |"
@@ -70,16 +34,59 @@ def format_table(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join([header_line, separator, *row_lines])
 
 
+def summarize_models(summary_rows: list[dict]) -> list[dict]:
+    grouped_rows = defaultdict(list)
+    for row in summary_rows:
+        grouped_rows[row["model"]].append(row)
+
+    summaries = []
+    for model_name, rows in grouped_rows.items():
+        summaries.append(
+            {
+                "model": model_name,
+                "variants": len(rows),
+                "total_detections": sum(to_int(row["detections"]) for row in rows),
+                "occupied_count": sum(to_int(row["occupied_count"]) for row in rows),
+                "available_count": sum(to_int(row["available_count"]) for row in rows),
+                "occluded_count": sum(to_int(row["occluded_count"]) for row in rows),
+                "average_inference_ms": mean(
+                    to_float(row["inference_ms_mean"]) for row in rows
+                ),
+            }
+        )
+
+    return sorted(summaries, key=lambda row: row["average_inference_ms"])
+
+
+def collect_selected_notes(summary_rows: list[dict], selected_model: str) -> list[list[str]]:
+    notes = []
+    for row in summary_rows:
+        if row["model"] != selected_model:
+            continue
+        notes.append(
+            [
+                row["location_id"].upper(),
+                row["variant"],
+                row["total_slots"],
+                row["detections"],
+                row["occupied_count"],
+                row["available_count"],
+                row["occluded_count"],
+                row["empty_slots"] or "-",
+                row["occluded_slots"] or "-",
+            ]
+        )
+    return notes
+
+
 def build_report(
     summary_rows: list[dict],
     slot_rows: list[dict],
     selected_model: str,
 ) -> str:
-    model_summaries = summarize_models(summary_rows, slot_rows)
-    model_summaries = sorted(
-        model_summaries,
-        key=lambda row: (row["model"] != selected_model, row["model"]),
-    )
+    del slot_rows
+
+    model_summaries = summarize_models(summary_rows)
     selected_summary = next(
         (row for row in model_summaries if row["model"] == selected_model),
         None,
@@ -87,25 +94,25 @@ def build_report(
     if selected_summary is None:
         raise ValueError(f"Selected model was not found in summary CSV: {selected_model}")
 
-    model_table = format_table(
+    model_summary_table = format_table(
         [
             "Model",
-            "Locations",
+            "Variants",
             "Total Detections",
-            "Avg Slot Accuracy",
-            "Avg Inference (ms)",
-            "Min Slot Overlap",
-            "Min Box Overlap",
+            "Occupied Slots",
+            "Available Slots",
+            "Occluded Slots",
+            "Avg Pipeline Time (ms)",
         ],
         [
             [
                 row["model"],
-                str(row["locations"]),
+                str(row["variants"]),
                 str(row["total_detections"]),
-                f"{row['average_accuracy']:.2%}",
+                str(row["occupied_count"]),
+                str(row["available_count"]),
+                str(row["occluded_count"]),
                 f"{row['average_inference_ms']:.2f}",
-                f"{row['minimum_slot_overlap']:.2%}",
-                f"{row['minimum_box_overlap']:.2%}",
             ]
             for row in model_summaries
         ],
@@ -115,62 +122,96 @@ def build_report(
         [
             "Model",
             "Location",
+            "Variant",
+            "Slots",
             "Detections",
             "Occupied",
             "Available",
-            "Slot Accuracy",
-            "Inference (ms)",
+            "Occluded",
+            "Avg Pipeline Time (ms)",
         ],
         [
             [
                 row["model"],
                 row["location_id"].upper(),
+                row["variant"],
+                row["total_slots"],
                 row["detections"],
                 row["occupied_count"],
                 row["available_count"],
-                f"{to_float(row['slot_accuracy']):.2%}",
-                f"{to_float(row['inference_ms']):.2f}",
+                row["occluded_count"],
+                f"{to_float(row['inference_ms_mean']):.2f}",
             ]
             for row in summary_rows
         ],
     )
 
-    selected_slot_rows = [
-        row for row in slot_rows if row["model"] == selected_model
-    ]
-    selected_slot_table = format_table(
-        ["Location", "Slot", "Occupied", "Slot Overlap", "Box Overlap"],
+    selected_detail_table = format_table(
         [
-            [
-                row["location_id"].upper(),
-                row["slot_id"],
-                row["occupied"],
-                f"{to_float(row['slot_overlap']):.2%}",
-                f"{to_float(row['box_overlap']):.2%}",
-            ]
-            for row in selected_slot_rows
+            "Location",
+            "Variant",
+            "Slots",
+            "Detections",
+            "Occupied",
+            "Available",
+            "Occluded",
+            "Available Slot IDs",
+            "Occluded Slot IDs",
         ],
+        collect_selected_notes(summary_rows, selected_model),
     )
 
-    return f"""# ParkViewRT Model Evaluation
+    return f"""# ParkViewRT YOLO Model Evaluation
 
-This document summarizes the pretrained YOLO model comparison that was run earlier on the original FCI and FAIE static parking images.
-
-The current application flow has moved to video-frame occupancy. Keep this report as the baseline pretrained-model comparison, then rerun evaluation after the final stable FCI and FAIE videos are captured and labeled.
+This document summarizes the current pretrained YOLO comparison for ParkViewRT.
+The run compares the production model against current/latest suitable Ultralytics
+nano detection checkpoints using the same backend thresholds and the current
+runtime slot JSON files.
 
 ## Evaluation Setup
 
 ```text
-Input images: backend/app/data/images/fci.jpeg, backend/app/data/images/faie.jpeg
-Slot labels: backend/app/data/slots/fci_slots.json, backend/app/data/slots/faie_slots.json
-Detection classes in current backend: car, truck
+Input images:
+- backend/app/data/images/fci_day.png
+- backend/app/data/images/fci_night.png
+- backend/app/data/images/faie_day.png
+- backend/app/data/images/faie_night.png
+
+Runtime slot files:
+- backend/app/data/slots/fci_day_slots.json
+- backend/app/data/slots/fci_night_slots.json
+- backend/app/data/slots/faie_day_slots.json
+- backend/app/data/slots/faie_night_slots.json
+
+Detection classes: car, truck
 Confidence threshold: 0.20
 Image size: 1600
-Slot overlap threshold: 0.30
+Slot overlap threshold: 0.25
 Box overlap threshold: 0.20
+Runs per model/location/variant: 3 measured runs after 1 warmup run
 ```
 
-The original labelled static-image comparison used eight selected slots for each location, and those selected slots were treated as occupied for the comparison. The current runtime slot files are broader: FCI monitors 79 slots and FAIE monitors 40 slots.
+## Compared Models
+
+```text
+yolo11n.pt  current production baseline
+yolo26n.pt  latest Ultralytics production family, nano checkpoint
+yolo12n.pt  newer attention-centric/community checkpoint, nano scale
+yolov8n.pt  previous stable nano baseline for regression comparison
+```
+
+Ultralytics documents YOLO26 as the latest edge-oriented family, and documents
+YOLO12 as a community/research line with production caveats. Because ParkViewRT
+needs near-real-time dashboard inference, this comparison uses nano checkpoints
+only instead of mixing nano/small/medium sizes.
+
+## Important Limitation
+
+These results are measured backend behavior, not final accuracy. The current
+four reference images do not include manually verified ground-truth status for
+every monitored slot. Therefore, the tables below should be used to justify a
+practical model choice, then revisited once a labelled validation set of video
+frames is prepared.
 
 ## Selected Model
 
@@ -178,27 +219,31 @@ The original labelled static-image comparison used eight selected slots for each
 {selected_model}
 ```
 
-`{selected_model}` remains the production backend model for now. The baseline comparison confirmed that it correctly marked all labelled static slots as occupied, and the debug images were visually reliable for the original MMU parking images.
+`{selected_model}` remains the selected backend model for now.
 
-All compared models reached full slot accuracy on this small static-image set. Because the current test set is limited, the production choice also considers visual debug quality, existing backend compatibility, and the need to retest once real videos are available.
+Reason:
 
-This decision should be revisited after the final stable FCI and FAIE videos are collected, because video frames may include motion blur, lighting changes, different occupancy levels, and more occlusion.
+```text
+It was the fastest model in the current run, matched YOLO26 on total detections,
+detected more occupied FAIE day slots than YOLO26, and avoided the large latency
+increase seen with YOLO12. YOLO26 remains the first model to retest when a
+ground-truth validation set is available, but this run does not show enough
+benefit to replace the stable current model.
+```
 
 ## Model Summary
 
-{model_table}
+{model_summary_table}
 
-## Location Results
+## Variant Results
 
 {location_table}
 
-## Selected Model Slot Details
+## Selected Model Variant Details
 
-{selected_slot_table}
+{selected_detail_table}
 
 ## Generated Artifacts
-
-The local evaluation run also creates:
 
 ```text
 colab/outputs/model_comparison_summary.csv
@@ -206,7 +251,14 @@ colab/outputs/model_comparison_slots.csv
 colab/outputs/debug_images/
 ```
 
-The `colab/outputs/` folder is ignored by Git because it contains generated experiment artifacts.
+The `colab/outputs/` folder is ignored by Git because it contains generated
+experiment artifacts.
+
+## Sources For Model Choice
+
+- Ultralytics YOLO11 documentation: https://docs.ultralytics.com/models/yolo11/
+- Ultralytics YOLO12 documentation: https://docs.ultralytics.com/models/yolo12/
+- Ultralytics YOLO26 documentation: https://docs.ultralytics.com/models/yolo26/
 """
 
 

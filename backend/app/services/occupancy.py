@@ -19,6 +19,9 @@ DEFAULT_VIDEO_VARIANTS = {
     "fci": "day",
     "faie": "day",
 }
+# These are spaces where the debug images showed stable tree/foliage blockage.
+# If YOLO cannot see the car clearly, the dashboard should report occluded
+# instead of incorrectly counting the slot as truly available.
 KNOWN_OCCLUDED_SLOTS = {
     ("fci", "day"): {"A7", "A10", "A50", "A60", "A61", "A62", "A64"},
 }
@@ -338,6 +341,9 @@ class ParkingOccupancyService:
             detection_center = Point(detection_box.centroid.x, detection_box.centroid.y)
             best_candidate = None
 
+            # One detected car can overlap more than one polygon, especially in
+            # angled rows. Pick the best matching slot for this detection so a
+            # single vehicle does not mark multiple neighboring spaces occupied.
             for index, slot_geometry in enumerate(slot_geometries):
                 slot_polygon = slot_geometry["polygon"]
                 slot_area = slot_polygon.area
@@ -367,6 +373,9 @@ class ParkingOccupancyService:
 
                 reason = None
                 score = 0
+                # Match rules are ranked from strongest geometric signal to
+                # weakest fallback. This keeps center-based matches stable while
+                # still handling partial overlaps from angled camera views.
                 if detection_center_in_slot:
                     reason = "detection-center"
                     score = 3 + overlap_ratio
@@ -407,6 +416,9 @@ class ParkingOccupancyService:
         if not occluded_slot_ids:
             return
 
+        # Occlusion is only applied after the normal detector pass. A slot that
+        # YOLO did mark occupied remains occupied; the override only catches
+        # known blocked spaces that would otherwise be counted as available.
         for slot in slots:
             if slot["slot_id"] in occluded_slot_ids and not slot["occupied"]:
                 slot["occupied"] = False

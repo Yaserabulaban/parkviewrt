@@ -9,6 +9,8 @@ FAIE_DAY_RUNTIME_SLOT_IDS = [
     *[f"B{index}" for index in range(1, 17)],
     *[f"B{index}" for index in range(24, 32)],
 ]
+# The dashboard still displays B1-B40, but runtime JSON contains only real
+# monitored polygons visible in the current video variant.
 FAIE_NIGHT_RUNTIME_SLOT_IDS = [
     *[f"B{index}" for index in range(1, 16)],
     *[f"B{index}" for index in range(24, 27)],

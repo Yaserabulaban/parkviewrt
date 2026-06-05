@@ -69,6 +69,8 @@ def find_current_browser_copy(source_path: Path) -> Path | None:
         source_path.with_name(f"{source_path.stem}{BROWSER_VIDEO_SUFFIX}"),
     ]
     for candidate in candidates:
+        # Reuse an existing browser copy only when it is newer than the source
+        # and already encoded as browser-friendly H.264.
         if (
             candidate != source_path
             and candidate.exists()
@@ -99,6 +101,8 @@ def prepare_browser_video(ffmpeg_path: str, source_path: Path) -> Path:
         "-an",
     ]
     if codec in {"h264", "avc1"}:
+        # H.264 recordings only need MP4 remuxing. HEVC recordings require
+        # re-encoding because many browsers cannot render them reliably.
         command.extend(["-c:v", "copy"])
     else:
         command.extend(

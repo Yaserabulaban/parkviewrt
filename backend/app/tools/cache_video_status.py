@@ -11,6 +11,12 @@ def parse_args():
     )
     parser.add_argument("location_id", choices=["fci", "faie"])
     parser.add_argument(
+        "--variant",
+        choices=["day", "night"],
+        default=None,
+        help="Video variant to cache. Defaults to the location default.",
+    )
+    parser.add_argument(
         "--seconds-step",
         type=float,
         default=2.0,
@@ -28,7 +34,7 @@ def parse_args():
 def main():
     args = parse_args()
     service = VideoSnapshotService(ParkingOccupancyService())
-    metadata = service.get_video_metadata(args.location_id)
+    metadata = service.get_video_metadata(args.location_id, variant=args.variant)
     frame_step = max(1, floor(metadata["fps"] * args.seconds_step))
     frame_count = metadata["frame_count"]
     frame_indices = list(range(0, frame_count, frame_step))
@@ -39,6 +45,7 @@ def main():
     for index, frame_index in enumerate(frame_indices, start=1):
         status = service.get_snapshot_status(
             args.location_id,
+            variant=args.variant,
             frame_index=frame_index,
             use_cache=True,
             save_result=True,

@@ -32,6 +32,9 @@ def ordered_annotations(
     if annotation_order is None:
         return sorted(annotations, key=lambda annotation: annotation["id"])
 
+    # Annotation exports store zero-based ids, while the row-order lists are
+    # written using one-based numbers because they are compared visually with
+    # the labeled images and dashboard slot order.
     annotations_by_number = {
         annotation["id"] + 1: annotation for annotation in annotations
     }
@@ -67,6 +70,8 @@ def build_slot_layout(
         f"{slot_prefix}{slot_number}"
         for slot_number in range(1, len(annotations) + 1)
     ]
+    # FAIE intentionally passes explicit slot_ids because its dashboard displays
+    # unmonitored gaps such as B17-B23/B32-B40 depending on the variant.
     if len(resolved_slot_ids) != len(annotations):
         raise ValueError(
             f"{location_label} has {len(annotations)} annotations but "

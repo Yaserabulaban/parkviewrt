@@ -19,6 +19,14 @@ Then regenerate the report:
 py -3.11 colab/generate_evaluation_report.py --selected-model yolo11n.pt
 ```
 
+After validation frames have been extracted and manually verified, run the
+accuracy comparison:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 colab/evaluate_model_accuracy.py
+```
+
 The comparison uses:
 
 ```text
@@ -100,6 +108,24 @@ polygons match the parking area correctly. This is still important because the
 current evaluation images do not include manual ground-truth status for every
 slot.
 
+For verified frame accuracy, use:
+
+```text
+model_accuracy_summary.csv
+model_accuracy_frames.csv
+model_accuracy_slots.csv
+```
+
+These files compare predictions against the verified labels in:
+
+```text
+colab/ground_truth/slot_status_ground_truth.csv
+```
+
+The script reads the original local videos using the `frame_index` values in
+the ground-truth CSV, so extracted review images and generated outputs can be
+deleted after the labels are verified.
+
 ## Current Decision
 
 The current measured run keeps `yolo11n.pt` as the backend model.
@@ -107,9 +133,9 @@ The current measured run keeps `yolo11n.pt` as the backend model.
 Reason:
 
 ```text
-yolo11n.pt was fastest in the current run, matched YOLO26 on total detections,
-detected more occupied FAIE day slots than YOLO26, and avoided YOLO12's higher
-latency. YOLO26 should be retested after a labelled validation frame set exists.
+yolo11n.pt achieved the best verified validation-frame accuracy, had perfect
+occupied recall on the reviewed frames, and avoided YOLO12's higher latency.
+YOLO26 should be retested again if the validation set is expanded.
 ```
 
 ## Notebook

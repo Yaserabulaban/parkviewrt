@@ -44,11 +44,11 @@ only instead of mixing nano/small/medium sizes.
 
 ## Important Limitation
 
-These results are measured backend behavior, not final accuracy. The current
-four reference images do not include manually verified ground-truth status for
-every monitored slot. Therefore, the tables below should be used to justify a
-practical model choice, then revisited once a labelled validation set of video
-frames is prepared.
+The static-image comparison below measures backend behavior on one reference
+image per location/variant. A second validation run was added after 12 video
+frames were extracted and manually verified for slot status. That validation
+run is the stronger accuracy evidence because it compares model predictions
+against reviewed ground-truth labels.
 
 ## Selected Model
 
@@ -61,12 +61,42 @@ yolo11n.pt
 Reason:
 
 ```text
-It was the fastest model in the current run, matched YOLO26 on total detections,
-detected more occupied FAIE day slots than YOLO26, and avoided the large latency
-increase seen with YOLO12. YOLO26 remains the first model to retest when a
-ground-truth validation set is available, but this run does not show enough
-benefit to replace the stable current model.
+It achieved the best verified validation-frame accuracy, had perfect occupied
+recall on the reviewed frames, and stayed faster than YOLO12. YOLO26 remains a
+useful future candidate because it is the latest production family, but it
+missed more occupied FCI day slots in the current validation run.
 ```
+
+## Verified Validation-Frame Accuracy
+
+The validation set contains 12 extracted video frames:
+
+```text
+FCI day: 3 frames
+FCI night: 3 frames
+FAIE day: 3 frames
+FAIE night: 3 frames
+Verified slot labels: 591
+```
+
+Ground truth is stored under:
+
+```text
+colab/ground_truth/slot_status_ground_truth.csv
+```
+
+The assisted labels were visually checked before being used as ground truth.
+The accuracy script reads the original local videos and samples the saved frame
+indices from this CSV, so generated frame images can be deleted after review.
+
+| Model | Frames | Slot Labels | Correct | Accuracy | Occupied Precision | Occupied Recall | Available Precision | Available Recall | Occluded Precision | Occluded Recall | Avg Pipeline Time (ms) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| yolo11n.pt | 12 | 591 | 591 | 100.00% | 100.00% | 100.00% | 100.00% | 100.00% | 100.00% | 100.00% | 916.85 |
+| yolo12n.pt | 12 | 591 | 587 | 99.32% | 99.67% | 99.01% | 99.28% | 100.00% | 92.86% | 92.86% | 1386.22 |
+| yolo26n.pt | 12 | 591 | 560 | 94.75% | 99.63% | 90.07% | 92.28% | 100.00% | 65.00% | 92.86% | 829.41 |
+| yolov8n.pt | 12 | 591 | 556 | 94.08% | 99.63% | 88.74% | 89.87% | 100.00% | 81.25% | 92.86% | 807.41 |
+
+`yolo11n.pt` had no mismatched slot statuses in this reviewed validation set.
 
 ## Model Summary
 

@@ -209,6 +209,67 @@ Optional backend syntax check:
 py -3.11 -c "import ast, pathlib; [ast.parse(path.read_text(encoding='utf-8')) for path in pathlib.Path('backend/app').rglob('*.py')]; print('syntax ok')"
 ```
 
+## Model Validation Dataset
+
+The active evaluation set contains 11 frames from each video variant:
+
+```text
+FCI day: 11
+FCI night: 11
+FAIE day: 11
+FAIE night: 11
+Total frames: 44
+Total monitored slot labels: 2,167
+```
+
+Prepare frames and assisted labels:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 colab/prepare_validation_dataset.py
+```
+
+Review every image under:
+
+```text
+colab/outputs/validation/review_images/
+```
+
+The statuses in `colab/ground_truth/slot_status_ground_truth.csv` were manually
+reviewed and all 2,167 labels are verified.
+
+Generate label-distribution evidence:
+
+```powershell
+py -3.11 colab/report_label_distribution.py
+```
+
+Official model comparison:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 colab/evaluate_model_accuracy.py `
+  --ground-truth colab/ground_truth/slot_status_ground_truth.csv
+```
+
+Official threshold tuning using the selected model:
+
+```powershell
+$env:PYTHONPATH='backend'
+py -3.11 colab/tune_thresholds.py `
+  --model yolo11n.pt `
+  --ground-truth colab/ground_truth/slot_status_ground_truth.csv
+```
+
+Final measured result:
+
+```text
+Selected model: yolo11n.pt
+Model accuracy: 2,167 / 2,167 (100.00%)
+Selected thresholds: confidence=0.20, slot=0.25, box=0.20
+Threshold accuracy: 2,167 / 2,167 (100.00%)
+```
+
 ## Current Final Validation Result
 
 The latest full-system validation covered automated tests, build output, video

@@ -70,14 +70,36 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def load_ground_truth(path: Path) -> dict[str, list[dict]]:
+def write_model_mismatches(path: Path, slot_rows: list[dict]) -> None:
+    mismatches = [row for row in slot_rows if row["correct"] == "false"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = list(slot_rows[0])
+    with path.open("w", encoding="utf-8", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(mismatches)
+
+
+def load_ground_truth(
+    path: Path,
+    allow_preliminary: bool = False,
+) -> dict[str, list[dict]]:
     grouped_rows = defaultdict(list)
     for row in read_csv(path):
-        expected_status = row["expected_status"].strip().lower()
+        expected_status = (
+            row.get("expected_status") or row.get("status") or ""
+        ).strip().lower()
         if expected_status not in VALID_STATUSES:
             raise ValueError(
-                f"{path} has invalid expected_status={row['expected_status']!r} "
+                f"{path} has invalid expected_status={expected_status!r} "
                 f"for frame_id={row['frame_id']} slot_id={row['slot_id']}"
+            )
+        verification_status = row.get("verification_status", "verified").lower()
+        if verification_status != "verified" and not allow_preliminary:
+            raise ValueError(
+                f"{path} contains preliminary labels. Manually review the "
+                "validation images and mark every row as verified "
+                "before running official model evaluation."
             )
         row["expected_status"] = expected_status
         grouped_rows[row["frame_id"]].append(row)
@@ -158,12 +180,28 @@ def summarize_model(
     occupied = precision_recall_f1(confusion, "occupied")
     available = precision_recall_f1(confusion, "available")
     occluded = precision_recall_f1(confusion, "occluded")
+    false_available = sum(
+        row["predicted_status"] == "available"
+        and row["expected_status"] in {"occupied", "occluded"}
+        for row in slot_rows
+    )
+    false_occupied = sum(
+        row["predicted_status"] == "occupied"
+        and row["expected_status"] in {"available", "occluded"}
+        for row in slot_rows
+    )
+    false_occluded = sum(
+        row["predicted_status"] == "occluded"
+        and row["expected_status"] in {"occupied", "available"}
+        for row in slot_rows
+    )
 
     return {
         "model": model_name,
         "frames": len(frame_rows),
         "slots": total_slots,
         "correct_slots": correct_slots,
+        "mismatched_slots": total_slots - correct_slots,
         "accuracy": correct_slots / total_slots if total_slots else 0.0,
         "occupied_precision": occupied["precision"],
         "occupied_recall": occupied["recall"],
@@ -174,6 +212,9 @@ def summarize_model(
         "occluded_precision": occluded["precision"],
         "occluded_recall": occluded["recall"],
         "occluded_f1": occluded["f1"],
+        "false_available": false_available,
+        "false_occupied": false_occupied,
+        "false_occluded": false_occluded,
         "inference_ms_mean": mean(float(row["inference_ms"]) for row in frame_rows),
         "detections_mean": mean(int(row["detections"]) for row in frame_rows),
     }
@@ -182,8 +223,12 @@ def summarize_model(
 def run_accuracy(
     model_names: list[str],
     ground_truth_path: Path,
+    allow_preliminary: bool = False,
 ) -> tuple[list[dict], list[dict], list[dict]]:
-    ground_truth = load_ground_truth(ground_truth_path)
+    ground_truth = load_ground_truth(
+        ground_truth_path,
+        allow_preliminary=allow_preliminary,
+    )
     summary_rows = []
     all_frame_rows = []
     all_slot_rows = []
@@ -276,20 +321,31 @@ def main() -> None:
     parser.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
     parser.add_argument("--ground-truth", type=Path, default=DEFAULT_GROUND_TRUTH_PATH)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument(
+        "--allow-preliminary",
+        action="store_true",
+        help="Diagnostic only. Official results must use manually verified labels.",
+    )
     args = parser.parse_args()
 
     summary_rows, frame_rows, slot_rows = run_accuracy(
         model_names=args.models,
         ground_truth_path=args.ground_truth,
+        allow_preliminary=args.allow_preliminary,
     )
 
     write_csv(args.output_dir / "model_accuracy_summary.csv", summary_rows)
     write_csv(args.output_dir / "model_accuracy_frames.csv", frame_rows)
     write_csv(args.output_dir / "model_accuracy_slots.csv", slot_rows)
+    write_model_mismatches(
+        args.output_dir / "model_accuracy_mismatches.csv",
+        slot_rows,
+    )
 
     print(f"Saved: {args.output_dir / 'model_accuracy_summary.csv'}")
     print(f"Saved: {args.output_dir / 'model_accuracy_frames.csv'}")
     print(f"Saved: {args.output_dir / 'model_accuracy_slots.csv'}")
+    print(f"Saved: {args.output_dir / 'model_accuracy_mismatches.csv'}")
 
 
 if __name__ == "__main__":

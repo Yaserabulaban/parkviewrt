@@ -1,186 +1,172 @@
 # ParkViewRT Model Evaluation Workflows
 
-This folder keeps repeatable YOLO comparison workflows for FYP2 reporting.
-The current dashboard uses pretrained Ultralytics detection models only; no
-custom YOLO training is part of the active implementation yet.
+This folder contains repeatable scripts for preparing validation labels,
+comparing pretrained YOLO models, and tuning occupancy thresholds.
 
-## Current Local Workflow
+## Active Dataset
 
-These scripts are used for report evidence, not for the live dashboard runtime.
-Run them when model choice, accuracy, or threshold values need to be justified
-again after a new video capture or slot relabeling.
+ParkViewRT uses one active ground-truth file:
 
-Run the comparison from the project root:
+```text
+colab/ground_truth/slot_status_ground_truth.csv
+```
+
+The dataset contains:
+
+```text
+FCI day: 11 frames, 858 labels
+FCI night: 11 frames, 847 labels
+FAIE day: 11 frames, 264 labels
+FAIE night: 11 frames, 198 labels
+Total: 44 frames, 2,167 monitored slot labels
+```
+
+Frame metadata is stored in:
+
+```text
+colab/ground_truth/frame_selection_summary.csv
+```
+
+## 1. Prepare The Dataset
+
+Run from the repository root:
 
 ```powershell
 $env:PYTHONPATH='backend'
-py -3.11 colab/evaluate_models.py --runs 3 --warmup-runs 1
+py -3.11 colab/prepare_validation_dataset.py
 ```
 
-Then regenerate the report:
+This command:
+
+```text
+selects 11 evenly spaced frames per video
+uses runtime slot JSON files to create one row per monitored slot
+reuses manually reviewed values already present in the active CSV
+creates assisted preliminary labels for new rows
+generates one debug image per selected frame
+```
+
+Review images:
+
+```text
+colab/outputs/validation/review_images/
+```
+
+## 2. Verify Ground Truth
+
+Check every preliminary slot status against its matching review image. Correct
+the `status` and `expected_status` columns when needed.
+
+Verify one frame:
 
 ```powershell
-py -3.11 colab/generate_evaluation_report.py --selected-model yolo11n.pt
+py -3.11 colab/verify_ground_truth.py --frame-id fci_day_0
 ```
 
-After validation frames have been extracted and manually verified, run the
-accuracy comparison:
+After all 44 frames have been checked:
+
+```powershell
+py -3.11 colab/verify_ground_truth.py --all
+```
+
+The evaluation scripts reject preliminary rows by default. The
+`--allow-preliminary` option is diagnostic only and must not be used for final
+report results.
+
+## 3. Generate Label Distribution
+
+```powershell
+py -3.11 colab/report_label_distribution.py
+```
+
+Outputs:
+
+```text
+colab/outputs/validation/label_distribution.csv
+colab/outputs/validation/label_distribution.md
+```
+
+The CSV contains overall, per-variant, and per-frame counts and percentages for
+`available`, `occupied`, and `occluded`.
+
+## 4. Compare Models
+
+Local model weights:
+
+```text
+backend/app/models/yolo11n.pt
+backend/app/models/yolo26n.pt
+backend/app/models/yolo12n.pt
+backend/app/models/yolov8n.pt
+```
+
+The active ground-truth rows are verified. Run:
 
 ```powershell
 $env:PYTHONPATH='backend'
 py -3.11 colab/evaluate_model_accuracy.py
 ```
 
-To tune detection and slot-overlap thresholds for the selected model:
+Outputs:
+
+```text
+colab/outputs/model_accuracy_summary.csv
+colab/outputs/model_accuracy_frames.csv
+colab/outputs/model_accuracy_slots.csv
+```
+
+The summary contains accuracy, status-level precision/recall/F1, false-status
+counts, mismatches, detections, and average pipeline time.
+
+## 5. Tune Thresholds
+
+Run after choosing the strongest model:
 
 ```powershell
 $env:PYTHONPATH='backend'
-py -3.11 colab/tune_thresholds.py
+py -3.11 colab/tune_thresholds.py --model yolo11n.pt
 ```
 
-The comparison uses:
+Replace `yolo11n.pt` if another model wins the comparison.
+
+Default threshold grid:
 
 ```text
-backend/app/data/images/fci_day.png
-backend/app/data/images/fci_night.png
-backend/app/data/images/faie_day.png
-backend/app/data/images/faie_night.png
-
-backend/app/data/slots/fci_day_slots.json
-backend/app/data/slots/fci_night_slots.json
-backend/app/data/slots/faie_day_slots.json
-backend/app/data/slots/faie_night_slots.json
+Confidence: 0.10 to 0.40
+Slot overlap: 0.15 to 0.40
+Box overlap: 0.10 to 0.30
+Total combinations: 210
 ```
 
-Default models:
+Outputs:
 
 ```text
-yolo11n.pt
-yolo26n.pt
-yolo12n.pt
-yolov8n.pt
+colab/outputs/threshold_tuning_summary.csv
+colab/outputs/threshold_tuning_mismatches.csv
 ```
 
-`yolo11n.pt` is the current production baseline. `yolo26n.pt` is included as
-the latest Ultralytics production family, `yolo12n.pt` is included as a newer
-community/research checkpoint with production caveats, and `yolov8n.pt` is kept
-as a previous stable nano baseline.
+## Current Runtime Status
 
-## Output Files
-
-Generated outputs are written under:
+The backend currently uses:
 
 ```text
-colab/outputs/
+Model: yolo11n.pt
+Confidence: 0.20
+Slot overlap: 0.25
+Box overlap: 0.20
 ```
 
-Expected files:
+Final results:
 
 ```text
-model_comparison_summary.csv
-model_comparison_slots.csv
-debug_images/debug_yolo11n_fci_day.jpg
-debug_images/debug_yolo11n_fci_night.jpg
-debug_images/debug_yolo11n_faie_day.jpg
-debug_images/debug_yolo11n_faie_night.jpg
-debug_images/debug_yolo26n_fci_day.jpg
-debug_images/debug_yolo26n_fci_night.jpg
-debug_images/debug_yolo26n_faie_day.jpg
-debug_images/debug_yolo26n_faie_night.jpg
-debug_images/debug_yolo12n_fci_day.jpg
-debug_images/debug_yolo12n_fci_night.jpg
-debug_images/debug_yolo12n_faie_day.jpg
-debug_images/debug_yolo12n_faie_night.jpg
-debug_images/debug_yolov8n_fci_day.jpg
-debug_images/debug_yolov8n_fci_night.jpg
-debug_images/debug_yolov8n_faie_day.jpg
-debug_images/debug_yolov8n_faie_night.jpg
+Selected model: yolo11n.pt
+Model accuracy: 2,167 / 2,167 (100.00%)
+Selected thresholds: 0.20 confidence, 0.25 slot overlap, 0.20 box overlap
+Threshold accuracy: 2,167 / 2,167 (100.00%)
 ```
 
-The generated CSV and debug images are ignored by Git.
+## Generated Files
 
-## How To Use The Results
-
-Use `model_comparison_summary.csv` for measured behavior:
-
-```text
-detections
-occupied_count
-available_count
-occluded_count
-inference_ms_mean
-```
-
-Use `model_comparison_slots.csv` for individual slot status, overlap ratio, box
-overlap ratio, and occupied reason.
-
-Use the debug images to visually confirm whether the detections and slot
-polygons match the parking area correctly. This is still important because the
-current evaluation images do not include manual ground-truth status for every
-slot.
-
-For verified frame accuracy, use:
-
-```text
-model_accuracy_summary.csv
-model_accuracy_frames.csv
-model_accuracy_slots.csv
-```
-
-For threshold tuning, use:
-
-```text
-threshold_tuning_summary.csv
-threshold_tuning_mismatches.csv
-```
-
-These files compare predictions against the verified labels in:
-
-```text
-colab/ground_truth/slot_status_ground_truth.csv
-```
-
-The script reads the original local videos using the `frame_index` values in
-the ground-truth CSV, so extracted review images and generated outputs can be
-deleted after the labels are verified.
-
-## Current Decision
-
-The current measured run keeps `yolo11n.pt` as the backend model.
-
-Reason:
-
-```text
-yolo11n.pt achieved the best verified validation-frame accuracy, had perfect
-occupied recall on the reviewed frames, and avoided YOLO12's higher latency.
-YOLO26 should be retested again if the validation set is expanded.
-```
-
-The threshold sweep keeps the current backend defaults:
-
-```text
-PARKVIEWRT_CONFIDENCE=0.20
-PARKVIEWRT_SLOT_THRESHOLD=0.25
-PARKVIEWRT_BOX_THRESHOLD=0.20
-```
-
-## Notebook
-
-```text
-No notebook is currently kept in this folder.
-```
-
-The old notebook was removed because the local scripts are clearer, easier to
-rerun from the current repository, and use the latest runtime day/night files.
-Create a new notebook later only if custom training or Colab GPU experiments
-become necessary.
-
-## Model Weights
-
-Weights are stored locally under:
-
-```text
-backend/app/models/
-```
-
-The scripts may download missing `.pt` files. Model weights are ignored by Git.
+`colab/outputs/` is ignored by Git. The output files can be regenerated from
+the tracked videos, slot JSON files, frame selection CSV, and active
+ground-truth CSV.

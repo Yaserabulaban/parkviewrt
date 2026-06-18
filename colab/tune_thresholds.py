@@ -68,14 +68,47 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def load_ground_truth(path: Path) -> dict[str, list[dict]]:
+def write_empty_mismatch_csv(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "confidence_threshold",
+        "slot_overlap_threshold",
+        "box_overlap_threshold",
+        "frame_id",
+        "location_id",
+        "variant",
+        "frame_index",
+        "slot_id",
+        "expected_status",
+        "predicted_status",
+        "correct",
+        "occupied_reason",
+    ]
+    with path.open("w", encoding="utf-8", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+
+
+def load_ground_truth(
+    path: Path,
+    allow_preliminary: bool = False,
+) -> dict[str, list[dict]]:
     grouped_rows = defaultdict(list)
     for row in read_csv(path):
-        expected_status = row["expected_status"].strip().lower()
+        expected_status = (
+            row.get("expected_status") or row.get("status") or ""
+        ).strip().lower()
         if expected_status not in VALID_STATUSES:
             raise ValueError(
-                f"{path} has invalid expected_status={row['expected_status']!r} "
+                f"{path} has invalid expected_status={expected_status!r} "
                 f"for frame_id={row['frame_id']} slot_id={row['slot_id']}"
+            )
+        verification_status = row.get("verification_status", "verified").lower()
+        if verification_status != "verified" and not allow_preliminary:
+            raise ValueError(
+                f"{path} contains preliminary labels. Manually review the "
+                "validation images and mark every row as verified "
+                "before running official threshold tuning."
             )
         row["expected_status"] = expected_status
         grouped_rows[row["frame_id"]].append(row)
@@ -312,11 +345,15 @@ def run_tuning(
     slot_values: list[float],
     box_values: list[float],
     ground_truth_path: Path,
+    allow_preliminary: bool = False,
 ) -> tuple[list[dict], list[dict]]:
     model_path = resolve_model_path(model_name)
     service = ParkingOccupancyService(settings=build_settings(model_path))
     video_service = VideoSnapshotService(service)
-    ground_truth = load_ground_truth(ground_truth_path)
+    ground_truth = load_ground_truth(
+        ground_truth_path,
+        allow_preliminary=allow_preliminary,
+    )
     frame_data = load_frame_data(service, video_service, ground_truth)
     summary_rows = []
     mismatch_rows = []
@@ -349,6 +386,11 @@ def main() -> None:
     parser.add_argument("--ground-truth", type=Path, default=DEFAULT_GROUND_TRUTH_PATH)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument(
+        "--allow-preliminary",
+        action="store_true",
+        help="Diagnostic only. Official results must use manually verified labels.",
+    )
+    parser.add_argument(
         "--confidence-values",
         default="0.10,0.15,0.20,0.25,0.30,0.35,0.40",
     )
@@ -368,11 +410,16 @@ def main() -> None:
         slot_values=parse_grid(args.slot_values),
         box_values=parse_grid(args.box_values),
         ground_truth_path=args.ground_truth,
+        allow_preliminary=args.allow_preliminary,
     )
 
     write_csv(args.output_dir / "threshold_tuning_summary.csv", summary_rows)
     if mismatch_rows:
         write_csv(args.output_dir / "threshold_tuning_mismatches.csv", mismatch_rows)
+    else:
+        write_empty_mismatch_csv(
+            args.output_dir / "threshold_tuning_mismatches.csv"
+        )
 
     best = summary_rows[0]
     print("Best threshold set:")
@@ -384,8 +431,7 @@ def main() -> None:
         f"correct={best['correct_slots']}/{best['slots']}"
     )
     print(f"Saved: {args.output_dir / 'threshold_tuning_summary.csv'}")
-    if mismatch_rows:
-        print(f"Saved: {args.output_dir / 'threshold_tuning_mismatches.csv'}")
+    print(f"Saved: {args.output_dir / 'threshold_tuning_mismatches.csv'}")
 
 
 if __name__ == "__main__":

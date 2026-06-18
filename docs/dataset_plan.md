@@ -163,6 +163,40 @@ Clear the relevant cache folder after replacing a video with the same filename.
 
 ## Future Dataset Expansion
 
+## Expanded Validation Dataset
+
+The supervisor-requested validation set uses an equal number of frames from
+each source video:
+
+```text
+FCI day: 11 frames, 858 monitored labels
+FCI night: 11 frames, 847 monitored labels
+FAIE day: 11 frames, 264 monitored labels
+FAIE night: 11 frames, 198 monitored labels
+Total: 44 frames, 2,167 monitored labels
+```
+
+Frames are selected at reproducible 10% intervals across each video. If an
+endpoint frame is blank or unreadable, the preparation script moves to the
+nearest usable frame and records the adjustment.
+
+Tracked validation files:
+
+```text
+colab/ground_truth/frame_selection_summary.csv
+colab/ground_truth/slot_status_ground_truth.csv
+```
+
+Generated manual-review images:
+
+```text
+colab/outputs/validation/review_images/
+```
+
+The ground-truth CSV contains manually verified `available`, `occupied`, and
+`occluded` states for monitored runtime slots only. Dashboard-only unmonitored
+slots are excluded.
+
 If pretrained YOLO is not accurate enough for final evaluation, prepare a custom detection dataset from sampled video frames.
 
 Potential labels:

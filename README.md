@@ -483,9 +483,8 @@ PARKVIEWRT_SLOT_THRESHOLD=0.25
 PARKVIEWRT_BOX_THRESHOLD=0.20
 ```
 
-Use `.env.example` as a reference for environment variables. Threshold tuning is
-complete for the current validation set, and the existing defaults are retained
-because they achieved `591/591` correct verified slot labels.
+Use `.env.example` as a reference for environment variables. The current model
+and thresholds were confirmed using the active 44-frame validation dataset.
 
 ## Evaluation Evidence
 
@@ -504,11 +503,34 @@ Slot overlap threshold: 0.25
 Box overlap threshold: 0.20
 ```
 
-The verified validation set contains 12 video frames and 591 slot-status labels
-under:
+The active validation dataset uses 11 evenly spaced frames from each of the
+four video variants:
 
 ```text
+FCI day: 11 frames x 78 slots = 858 labels
+FCI night: 11 frames x 77 slots = 847 labels
+FAIE day: 11 frames x 24 slots = 264 labels
+FAIE night: 11 frames x 18 slots = 198 labels
+Total: 44 frames and 2,167 monitored slot labels
+```
+
+Selection metadata and assisted review labels are stored under:
+
+```text
+colab/ground_truth/frame_selection_summary.csv
 colab/ground_truth/slot_status_ground_truth.csv
+```
+
+The active ground-truth CSV contains 2,167 manually verified labels. If the
+dataset is regenerated later, any newly created preliminary rows must be
+checked against their generated review images before evaluation.
+
+Final measured result:
+
+```text
+yolo11n.pt: 2,167 / 2,167 correct labels
+Selected thresholds: confidence 0.20, slot overlap 0.25, box overlap 0.20
+Threshold result: 2,167 / 2,167 correct labels
 ```
 
 ## Troubleshooting

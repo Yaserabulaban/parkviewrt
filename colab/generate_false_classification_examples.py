@@ -11,9 +11,8 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_DIR = PROJECT_ROOT / "backend"
 DEFAULT_RESULTS = PROJECT_ROOT / "colab" / "outputs" / "model_accuracy_slots.csv"
-DEFAULT_OUTPUT_DIR = (
-    PROJECT_ROOT / "colab" / "outputs" / "false_classification_examples"
-)
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "colab" / "outputs" / "false_classification_examples"
+DEFAULT_REPORT_ASSET_DIR = PROJECT_ROOT / "docs" / "report_assets"
 SLOTS_DIR = BACKEND_DIR / "app" / "data" / "slots"
 
 if str(BACKEND_DIR) not in sys.path:
@@ -24,12 +23,6 @@ from app.services.video_snapshot import VideoSnapshotService  # noqa: E402
 
 
 MODELS = ("yolo12n.pt", "yolo26n.pt", "yolov8n.pt")
-VARIANTS = (
-    ("fci", "day"),
-    ("fci", "night"),
-    ("faie", "day"),
-    ("faie", "night"),
-)
 MODEL_LABELS = {
     "yolo12n.pt": "YOLO12n",
     "yolo26n.pt": "YOLO26n",
@@ -39,6 +32,28 @@ PREDICTED_COLORS = {
     "available": (0, 175, 70),
     "occupied": (40, 40, 230),
     "occluded": (0, 170, 255),
+}
+# Pick clear examples where possible. FAIE crops are less crowded in print,
+# but each model still uses a real mismatch from the evaluation CSV.
+PREFERRED_EXAMPLES = {
+    "yolo12n.pt": (
+        ("fci", "day"),
+        ("fci", "night"),
+        ("faie", "day"),
+        ("faie", "night"),
+    ),
+    "yolo26n.pt": (
+        ("faie", "day"),
+        ("fci", "night"),
+        ("fci", "day"),
+        ("faie", "night"),
+    ),
+    "yolov8n.pt": (
+        ("faie", "day"),
+        ("fci", "night"),
+        ("fci", "day"),
+        ("faie", "night"),
+    ),
 }
 
 
@@ -56,8 +71,8 @@ def write_csv(path: Path, rows: list[dict]) -> None:
 
 
 def mismatch_priority(row: dict) -> tuple:
-    # False available is the most important example because it can show a
-    # genuinely occupied or occluded slot as free.
+    # False available is the most important report example because it can show
+    # a genuinely occupied or occluded slot as free.
     predicted = row["predicted_status"]
     expected = row["expected_status"]
     return (
@@ -68,16 +83,30 @@ def mismatch_priority(row: dict) -> tuple:
     )
 
 
-def select_examples(rows: list[dict]) -> dict[tuple[str, str, str], dict]:
-    grouped = {}
+def select_model_examples(rows: list[dict]) -> dict[str, dict]:
+    mismatches_by_model_variant: dict[tuple[str, str, str], dict] = {}
     for row in rows:
         if row["model"] not in MODELS or row["correct"] != "false":
             continue
         key = (row["model"], row["location_id"], row["variant"])
-        current = grouped.get(key)
+        current = mismatches_by_model_variant.get(key)
         if current is None or mismatch_priority(row) < mismatch_priority(current):
-            grouped[key] = row
-    return grouped
+            mismatches_by_model_variant[key] = row
+
+    selected = {}
+    for model_name in MODELS:
+        for location_id, variant in PREFERRED_EXAMPLES[model_name]:
+            key = (model_name, location_id, variant)
+            if key in mismatches_by_model_variant:
+                selected[model_name] = mismatches_by_model_variant[key]
+                break
+        if model_name not in selected:
+            model_rows = [
+                row for key, row in mismatches_by_model_variant.items() if key[0] == model_name
+            ]
+            if model_rows:
+                selected[model_name] = min(model_rows, key=mismatch_priority)
+    return selected
 
 
 def load_slot_points(location_id: str, variant: str, slot_id: str) -> np.ndarray:
@@ -91,8 +120,8 @@ def load_slot_points(location_id: str, variant: str, slot_id: str) -> np.ndarray
 
 def crop_slot(frame: np.ndarray, points: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     x, y, width, height = cv2.boundingRect(points)
-    margin_x = max(100, width * 2)
-    margin_y = max(80, height * 2)
+    margin_x = max(140, width * 3)
+    margin_y = max(120, height * 3)
     left = max(0, x - margin_x)
     top = max(0, y - margin_y)
     right = min(frame.shape[1], x + width + margin_x)
@@ -124,9 +153,9 @@ def draw_multiline(
     lines: list[str],
     origin: tuple[int, int],
     color: tuple[int, int, int],
-    font_scale: float = 0.75,
-    thickness: int = 2,
-    line_height: int = 34,
+    font_scale: float,
+    thickness: int,
+    line_height: int,
 ) -> None:
     x, y = origin
     for index, line in enumerate(lines):
@@ -142,12 +171,13 @@ def draw_multiline(
         )
 
 
-def create_mismatch_panel(
+def create_example_figure(
     video_service: VideoSnapshotService,
     row: dict,
-    width: int,
-    height: int,
-) -> np.ndarray:
+    output_path: Path,
+    width: int = 1600,
+    height: int = 1050,
+) -> dict:
     video_path = video_service._find_video_path(row["location_id"], row["variant"])
     frame, _ = video_service._read_frame(video_path, int(row["frame_index"]))
     points = load_slot_points(row["location_id"], row["variant"], row["slot_id"])
@@ -157,196 +187,64 @@ def create_mismatch_panel(
     overlay = crop.copy()
     cv2.fillPoly(overlay, [adjusted_points], predicted_color)
     crop = cv2.addWeighted(overlay, 0.25, crop, 0.75, 0)
-    cv2.polylines(crop, [adjusted_points], True, predicted_color, 6, cv2.LINE_AA)
+    cv2.polylines(crop, [adjusted_points], True, predicted_color, 7, cv2.LINE_AA)
 
-    image_height = height - 155
+    image_height = height - 160
     fitted = fit_image(crop, width - 24, image_height - 12)
-    panel = np.full((height, width, 3), 250, dtype=np.uint8)
-    panel[12 : 12 + fitted.shape[0], 12 : 12 + fitted.shape[1]] = fitted
+    figure = np.full((height, width, 3), 250, dtype=np.uint8)
+    figure[12 : 12 + fitted.shape[0], 12 : 12 + fitted.shape[1]] = fitted
 
-    title = f"{row['location_id'].upper()} {row['variant'].title()}"
+    cv2.rectangle(figure, (0, height - 155), (width - 1, height - 1), (32, 36, 42), -1)
+    title = f"{MODEL_LABELS[row['model']]} False Classification Example"
     details = [
-        f"Slot {row['slot_id']} | Frame {row['frame_index']}",
-        f"Expected: {row['expected_status'].title()}",
-        f"Predicted: {row['predicted_status'].title()}",
+        f"{row['location_id'].upper()} {row['variant'].title()} | Slot {row['slot_id']} | Frame {row['frame_index']}",
+        f"Expected: {row['expected_status'].title()} | Predicted: {row['predicted_status'].title()}",
     ]
-    cv2.rectangle(
-        panel,
-        (0, height - 150),
-        (width - 1, height - 1),
-        (32, 36, 42),
-        -1,
-    )
-    draw_multiline(panel, [title], (22, height - 112), (255, 255, 255), 0.88, 2)
-    draw_multiline(panel, details, (22, height - 72), (230, 235, 240), 0.64, 1, 26)
-    return panel
-
-
-def create_no_mismatch_panel(
-    location_id: str,
-    variant: str,
-    width: int,
-    height: int,
-) -> np.ndarray:
-    panel = np.full((height, width, 3), (241, 245, 249), dtype=np.uint8)
-    title = f"{location_id.upper()} {variant.title()}"
-    cv2.rectangle(panel, (0, 0), (width - 1, height - 1), (148, 163, 184), 3)
-    cv2.putText(
-        panel,
-        title,
-        (32, 70),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1.05,
-        (15, 23, 42),
-        3,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        panel,
-        "No false classification found",
-        (32, height // 2),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.82,
-        (22, 101, 52),
-        2,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        panel,
-        "All verified slot labels were correct.",
-        (32, height // 2 + 45),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.62,
-        (71, 85, 105),
-        2,
-        cv2.LINE_AA,
-    )
-    return panel
-
-
-def create_model_sheet(
-    model_name: str,
-    examples: dict[tuple[str, str, str], dict],
-    video_service: VideoSnapshotService,
-    output_path: Path,
-) -> list[dict]:
-    panel_width = 900
-    panel_height = 620
-    header_height = 130
-    sheet = np.full(
-        (header_height + panel_height * 2, panel_width * 2, 3),
-        248,
-        dtype=np.uint8,
-    )
-    cv2.rectangle(
-        sheet,
-        (0, 0),
-        (sheet.shape[1] - 1, header_height - 1),
-        (22, 26, 31),
-        -1,
-    )
-    cv2.putText(
-        sheet,
-        f"{MODEL_LABELS[model_name]} False Classification Examples",
-        (42, 60),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1.35,
-        (255, 255, 255),
-        3,
-        cv2.LINE_AA,
-    )
-    cv2.putText(
-        sheet,
-        "One actual mismatch per video variant where a mismatch exists",
-        (42, 103),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.72,
-        (205, 213, 222),
-        2,
-        cv2.LINE_AA,
-    )
-
-    summary_rows = []
-    for index, (location_id, variant) in enumerate(VARIANTS):
-        key = (model_name, location_id, variant)
-        row = examples.get(key)
-        if row:
-            panel = create_mismatch_panel(
-                video_service,
-                row,
-                panel_width,
-                panel_height,
-            )
-            summary_rows.append(
-                {
-                    "model": model_name,
-                    "location_id": location_id,
-                    "variant": variant,
-                    "has_mismatch": "yes",
-                    "frame_index": row["frame_index"],
-                    "slot_id": row["slot_id"],
-                    "expected_status": row["expected_status"],
-                    "predicted_status": row["predicted_status"],
-                }
-            )
-        else:
-            panel = create_no_mismatch_panel(
-                location_id,
-                variant,
-                panel_width,
-                panel_height,
-            )
-            summary_rows.append(
-                {
-                    "model": model_name,
-                    "location_id": location_id,
-                    "variant": variant,
-                    "has_mismatch": "no",
-                    "frame_index": "",
-                    "slot_id": "",
-                    "expected_status": "",
-                    "predicted_status": "",
-                }
-            )
-
-        row_index = index // 2
-        column_index = index % 2
-        top = header_height + row_index * panel_height
-        left = column_index * panel_width
-        sheet[top : top + panel_height, left : left + panel_width] = panel
+    draw_multiline(figure, [title], (28, height - 112), (255, 255, 255), 0.9, 2, 34)
+    draw_multiline(figure, details, (28, height - 72), (230, 235, 240), 0.68, 2, 30)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(output_path), sheet)
-    return summary_rows
+    cv2.imwrite(str(output_path), figure)
+    return {
+        "model": row["model"],
+        "location_id": row["location_id"],
+        "variant": row["variant"],
+        "frame_index": row["frame_index"],
+        "slot_id": row["slot_id"],
+        "expected_status": row["expected_status"],
+        "predicted_status": row["predicted_status"],
+        "output_path": str(output_path),
+    }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate report-ready false-classification example sheets."
+        description="Generate one standalone false-classification example per model."
     )
     parser.add_argument("--results", type=Path, default=DEFAULT_RESULTS)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--report-asset-dir", type=Path, default=DEFAULT_REPORT_ASSET_DIR)
     args = parser.parse_args()
 
     rows = read_csv(args.results)
-    examples = select_examples(rows)
+    selected_examples = select_model_examples(rows)
     video_service = VideoSnapshotService(ParkingOccupancyService())
     summary_rows = []
 
     for model_name in MODELS:
-        output_path = args.output_dir / (
-            f"{Path(model_name).stem}_false_classification_examples.png"
+        if model_name not in selected_examples:
+            print(f"No false-classification example found for {model_name}")
+            continue
+        output_path = args.report_asset_dir / (
+            f"{Path(model_name).stem}_false_classification_example.png"
         )
-        summary_rows.extend(
-            create_model_sheet(
-                model_name,
-                examples,
-                video_service,
-                output_path,
-            )
+        summary_rows.append(
+            create_example_figure(video_service, selected_examples[model_name], output_path)
         )
         print(f"Saved: {output_path}")
 
+    if not summary_rows:
+        raise ValueError("No false-classification examples were found.")
     write_csv(args.output_dir / "false_classification_examples.csv", summary_rows)
     print(f"Saved: {args.output_dir / 'false_classification_examples.csv'}")
 

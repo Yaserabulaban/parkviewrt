@@ -23,6 +23,10 @@ Run these commands from the repository root unless a command says otherwise.
 ```powershell
 py -3.11 -m pip install -r backend/requirements.txt
 ```
+or if you are already inside the backend folder. Run the following command
+```powershell
+py -3.11 -m pip install -r requirements.txt
+```
 
 Model weights are expected under:
 

@@ -78,7 +78,7 @@ Model weights are expected at:
 backend/app/models/yolo11n.pt
 ```
 
-Model files are ignored by Git. If the file is missing and network access is
+If the file is missing and network access is
 available, Ultralytics may download it automatically.
 
 Local videos are expected under day/night variant folders:

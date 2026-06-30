@@ -136,9 +136,6 @@ the local environment.
 `.gitignore`: keeps generated outputs, local videos, model weights, virtual
 environments, and frontend build folders out of Git.
 
-`1221305612_Md.ZubairHassanTarif_FYP1_Report.pdf`: prior FYP report artifact.
-It is not used by the runtime application.
-
 ## Backend Folder
 
 ```text

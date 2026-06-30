@@ -32,7 +32,6 @@ colab/outputs/
 colab/.ipynb_checkpoints/
 
 # Downloaded pretrained model weights
-*.pt
 *.pth
 *.onnx
 
